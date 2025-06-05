@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>User Referral Dashboard</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 40px;
+      background-color: #f9f9f9;
+      max-width: 800px;
+      margin: auto;
+    }
+    h1 {
+      color: #333;
+    }
+    #user-info, #referral-section {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+      margin-top: 20px;
+    }
+    p, label {
+      font-size: 18px;
+      margin: 10px 0;
+    }
+    .referral-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 10px;
+      align-items: center;
+    }
+    input[type="text"] {
+      padding: 8px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+      width: 100%;
+    }
+    input[readonly] {
+      background-color: #eee;
+      color: #333;
+    }
+    select {
+      padding: 8px;
+      font-size: 16px;
+      margin-bottom: 15px;
+    }
+    .total {
+      font-weight: bold;
+      font-size: 20px;
+      color: #2c3e50;
+      margin-top: 15px;
+    }
+    button {
+      margin-top: 20px;
+      background-color: #d9534f;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #c9302c;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Referral Dashboard</h1>
+
+<div id="user-info">
+  <p>Loading user info...</p>
+</div>
+
+<div id="referral-section" style="display:none;">
+  <h2>Referral Configuration</h2>
+  <label for="referral-count">Select Number of Referrals:</label>
+  <select id="referral-count" onchange="generateReferralFields()">
+    <option value="5">5 Referrals</option>
+    <option value="10">10 Referrals</option>
+  </select>
+
+  <div id="referral-fields"></div>
+
+  <p class="total">Total Price: <span id="total-price">₱750</span></p>
+  <button id="submit-order-btn">Submit Order</button>
+</div>
+
+<button id="logout-btn" style="display:none;">Logout</button>
+
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyDMx67HEtpWr7fPDsnBIBGznXTP9MIU9QU",
+    authDomain: "mushroom-referral.firebaseapp.com",
+    projectId: "mushroom-referral",
+    storageBucket: "mushroom-referral.appspot.com",
+    messagingSenderId: "1038687686201",
+    appId: "1:1038687686201:web:c130be2734a3d42122c7e8",
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+
+  const userInfoDiv = document.getElementById("user-info");
+  const logoutBtn = document.getElementById("logout-btn");
+  const referralSection = document.getElementById("referral-section");
+
+  let currentReferralCount = 0; // Track to update UI dynamically
+
+  auth.onAuthStateChanged(async (user) => {
+    if (user) {
+      logoutBtn.style.display = "inline-block";
+      referralSection.style.display = "block";
+
+      try {
+        const userDoc = await db.collection("users").doc(user.uid).get();
+        const userData = userDoc.exists ? userDoc.data() : {};
+
+        currentReferralCount = userData.referralCount || 0;
+
+        userInfoDiv.innerHTML = `
+          <p><strong>Name:</strong> ${userData.name || user.displayName || "N/A"}</p>
+          <p><strong>Email:</strong> ${user.email}</p>
+          <p><strong>Referral Code:</strong> ${userData.referralCode || "No referral code assigned"}</p>
+          <p><strong>Referral Count:</strong> <span id="referral-count-display">${currentReferralCount}</span></p>
+        `;
+      } catch (error) {
+        userInfoDiv.innerHTML = "<p>Failed to load user data.</p>";
+        console.error("Error fetching user data:", error);
+      }
+    } else {
+      userInfoDiv.innerHTML = "<p>You are not logged in. Please <a href='signup.html'>login or sign up</a>.</p>";
+      logoutBtn.style.display = "none";
+    }
+  });
+
+  logoutBtn.addEventListener("click", () => {
+    auth.signOut().then(() => location.reload());
+  });
+
+  function generateReferralFields() {
+    const count = parseInt(document.getElementById("referral-count").value);
+    const container = document.getElementById("referral-fields");
+    const totalDisplay = document.getElementById("total-price");
+    const pricePerReferral = 150;
+
+    container.innerHTML = "";
+
+    for (let i = 1; i <= count; i++) {
+      const row = document.createElement("div");
+      row.className = "referral-row";
+      row.innerHTML = `
+        <input type="text" placeholder="Referral Name ${i}" name="referral${i}" />
+        <input type="text" value="Mushroom Chicharon" readonly />
+        <input type="text" value="₱150" readonly />
+      `;
+      container.appendChild(row);
+    }
+
+    totalDisplay.textContent = `₱${count * pricePerReferral}`;
+  }
+
+  document.getElementById("submit-order-btn").addEventListener("click", async () => {
+    const user = auth.currentUser;
+    if (!user) return alert("You must be logged in to submit an order.");
+
+    const referralInputs = document.querySelectorAll("#referral-fields input[type='text']:not([readonly])");
+    const referrals = Array.from(referralInputs)
+      .map(input => input.value.trim())
+      .filter(name => name.length > 0);
+
+    if (referrals.length === 0) {
+      alert("Please enter at least one referral name.");
+      return;
+    }
+
+    const order = {
+      userId: user.uid,
+      referralNames: referrals,
+      product: "Mushroom Chicharon",
+      pricePerItem: 150,
+      quantity: referrals.length,
+      totalPrice: referrals.length * 150,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+
+    try {
+      await db.collection("orders").add(order);
+
+      // Update referral count
+      const userRef = db.collection("users").doc(user.uid);
+      const updatedCount = currentReferralCount + referrals.length;
+
+      await userRef.update({
+        referralCount: updatedCount
+      });
+
+      currentReferralCount = updatedCount;
+      document.getElementById("referral-count-display").textContent = updatedCount;
+
+      alert("Order submitted successfully!");
+    } catch (error) {
+      console.error("Error submitting order:", error);
+      alert("Failed to submit order.");
+    }
+  });
+
+  window.onload = generateReferralFields;
+</script>
+
+</body>
+</html>
