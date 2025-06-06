@@ -540,7 +540,7 @@
     if (!userDoc.exists || !userDoc.data().isAdmin) {
       alert("Access denied. Not an admin.");
       await firebase.auth().signOut();
-      window.location.href = "Referral Login.html";
+      window.location.href = "index.html";
       return;
     }
 
@@ -556,7 +556,7 @@
   document.getElementById('logout-btn').addEventListener('click', async () => {
     if (confirm('Are you sure you want to logout?')) {
       await firebase.auth().signOut();
-      window.location.href = 'Referral Login.html';
+      window.location.href = 'index.html';
     }
   });
 </script>
