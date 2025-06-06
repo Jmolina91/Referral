@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>User Referral Dashboard</title>
+  <title>Referral Dashboard</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -66,6 +66,38 @@
     button:hover {
       background-color: #c9302c;
     }
+    /* Modal styles for order history */
+    #orderHistoryModal {
+      display: none;
+      position: fixed;
+      z-index: 100;
+      left: 0; top: 0;
+      width: 100%; height: 100%;
+      overflow: auto;
+      background-color: rgba(0,0,0,0.5);
+    }
+    #orderHistoryContent {
+      background-color: #fff;
+      margin: 10% auto;
+      padding: 20px;
+      border-radius: 8px;
+      max-width: 600px;
+      max-height: 70vh;
+      overflow-y: auto;
+    }
+    #closeModalBtn {
+      float: right;
+      background-color: #d9534f;
+      border: none;
+      padding: 5px 10px;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    #closeModalBtn:hover {
+      background-color: #c9302c;
+    }
   </style>
 </head>
 <body>
@@ -88,9 +120,23 @@
 
   <p class="total">Total Price: <span id="total-price">₱750</span></p>
   <button id="submit-order-btn">Submit Order</button>
+
+  <!-- New button to view order history -->
+  <button id="view-order-history-btn" style="background-color:#5bc0de; margin-left: 10px;">View Order History</button>
 </div>
 
 <button id="logout-btn" style="display:none;">Logout</button>
+
+<!-- Modal for order history -->
+<div id="orderHistoryModal">
+  <div id="orderHistoryContent">
+    <button id="closeModalBtn">Close</button>
+    <h2>Order History Summary</h2>
+    <div id="orderHistoryDetails">
+      <!-- Filled dynamically -->
+    </div>
+  </div>
+</div>
 
 <!-- Firebase SDKs -->
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
@@ -115,7 +161,14 @@
   const logoutBtn = document.getElementById("logout-btn");
   const referralSection = document.getElementById("referral-section");
 
-  let currentReferralCount = 0; // Track to update UI dynamically
+  const orderHistoryModal = document.getElementById("orderHistoryModal");
+  const orderHistoryDetails = document.getElementById("orderHistoryDetails");
+  const closeModalBtn = document.getElementById("closeModalBtn");
+  const viewOrderHistoryBtn = document.getElementById("view-order-history-btn");
+
+  let currentReferralCount = 0;
+  let currentReferralCode = null;
+  let currentUserName = "Unknown User"; // Store the username globally
 
   auth.onAuthStateChanged(async (user) => {
     if (user) {
@@ -123,17 +176,28 @@
       referralSection.style.display = "block";
 
       try {
-        const userDoc = await db.collection("users").doc(user.uid).get();
+        const userRef = db.collection("users").doc(user.uid);
+        const userDoc = await userRef.get();
         const userData = userDoc.exists ? userDoc.data() : {};
 
         currentReferralCount = userData.referralCount || 0;
+        currentReferralCode = userData.referralCode || null;
+
+        // Store username from Firestore or fallback to displayName
+        currentUserName = userData.name || user.displayName || "Unknown User";
+
+        if (!currentReferralCode) {
+          currentReferralCode = await generateUniqueReferralCode();
+          await userRef.update({ referralCode: currentReferralCode });
+        }
 
         userInfoDiv.innerHTML = `
-          <p><strong>Name:</strong> ${userData.name || user.displayName || "N/A"}</p>
+          <p><strong>Name:</strong> ${currentUserName}</p>
           <p><strong>Email:</strong> ${user.email}</p>
-          <p><strong>Referral Code:</strong> ${userData.referralCode || "No referral code assigned"}</p>
+          <p><strong>Referral Code:</strong> ${currentReferralCode}</p>
           <p><strong>Referral Count:</strong> <span id="referral-count-display">${currentReferralCount}</span></p>
         `;
+
       } catch (error) {
         userInfoDiv.innerHTML = "<p>Failed to load user data.</p>";
         console.error("Error fetching user data:", error);
@@ -141,6 +205,7 @@
     } else {
       userInfoDiv.innerHTML = "<p>You are not logged in. Please <a href='signup.html'>login or sign up</a>.</p>";
       logoutBtn.style.display = "none";
+      referralSection.style.display = "none";
     }
   });
 
@@ -170,6 +235,41 @@
     totalDisplay.textContent = `₱${count * pricePerReferral}`;
   }
 
+  // Generate fields on load
+  window.onload = generateReferralFields;
+
+  // Generate unique referral code atomically
+  async function generateUniqueReferralCode() {
+    const counterRef = db.collection("counters").doc("referralCode");
+    return await db.runTransaction(async (transaction) => {
+      const counterDoc = await transaction.get(counterRef);
+      let newCode = 1;
+      if (!counterDoc.exists) {
+        transaction.set(counterRef, { lastCode: newCode });
+      } else {
+        newCode = counterDoc.data().lastCode + 1;
+        transaction.update(counterRef, { lastCode: newCode });
+      }
+      return newCode.toString();
+    });
+  }
+
+  // Generate unique order number formatted as 5-digit string
+  async function generateUniqueOrderNumber() {
+    const counterRef = db.collection("counters").doc("orderNumber");
+    return await db.runTransaction(async (transaction) => {
+      const counterDoc = await transaction.get(counterRef);
+      let newNumber = 1;
+      if (!counterDoc.exists) {
+        transaction.set(counterRef, { lastNumber: newNumber });
+      } else {
+        newNumber = counterDoc.data().lastNumber + 1;
+        transaction.update(counterRef, { lastNumber: newNumber });
+      }
+      return newNumber.toString().padStart(5, '0');
+    });
+  }
+
   document.getElementById("submit-order-btn").addEventListener("click", async () => {
     const user = auth.currentUser;
     if (!user) return alert("You must be logged in to submit an order.");
@@ -184,39 +284,141 @@
       return;
     }
 
-    const order = {
-      userId: user.uid,
-      referralNames: referrals,
-      product: "Mushroom Chicharon",
-      pricePerItem: 150,
-      quantity: referrals.length,
-      totalPrice: referrals.length * 150,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    };
+    const pricePerItem = 150;
+    const quantity = referrals.length;
+    const totalPrice = quantity * pricePerItem;
 
     try {
+      const orderNumber = await generateUniqueOrderNumber();
+
+      const userRef = db.collection("users").doc(user.uid);
+      const userDoc = await userRef.get();
+      const userData = userDoc.exists ? userDoc.data() : {};
+
+      let referralCode = userData.referralCode;
+      if (!referralCode) {
+        referralCode = await generateUniqueReferralCode();
+        await userRef.update({ referralCode });
+      }
+
+      // Use stored username here
+      const username = currentUserName;
+
+      const order = {
+        userId: user.uid,     // <-- Added userId for permissions and querying
+        username,             // existing username field
+        referralNames: referrals,
+        product: "Mushroom Chicharon",
+        pricePerItem,
+        quantity,
+        totalPrice,
+        referralCode,
+        orderNumber,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      };
+
       await db.collection("orders").add(order);
 
-      // Update referral count
-      const userRef = db.collection("users").doc(user.uid);
-      const updatedCount = currentReferralCount + referrals.length;
-
-      await userRef.update({
-        referralCount: updatedCount
-      });
+      const updatedCount = (userData.referralCount || 0) + quantity;
+      await userRef.update({ referralCount: updatedCount });
 
       currentReferralCount = updatedCount;
       document.getElementById("referral-count-display").textContent = updatedCount;
 
-      alert("Order submitted successfully!");
+      referralInputs.forEach(input => input.value = "");
+
+      alert(`Order submitted successfully! Your referral code is ${referralCode} and your order number is ${orderNumber}.`);
+
     } catch (error) {
       console.error("Error submitting order:", error);
-      alert("Failed to submit order.");
+      alert(`Failed to submit order: ${error.message || error}`);
     }
   });
 
-  window.onload = generateReferralFields;
+  // ===== View Order History Button Handler =====
+  viewOrderHistoryBtn.addEventListener("click", async () => {
+    const user = auth.currentUser;
+    if (!user) return alert("You must be logged in to view order history.");
+
+    orderHistoryDetails.innerHTML = "<p>Loading order history...</p>";
+    orderHistoryModal.style.display = "block";
+
+    try {
+      // Query orders by userId instead of username for proper permissions
+      const ordersQuery = await db.collection("orders")
+        .where("userId", "==", user.uid)     // <-- Changed here from username to userId
+        .orderBy("createdAt", "desc")
+        .get();
+
+      if (ordersQuery.empty) {
+        orderHistoryDetails.innerHTML = "<p>No orders found.</p>";
+        return;
+      }
+
+      let overallQuantityPaid = 0;
+      let overallSummaryPaid = 0;
+
+      let html = "";
+
+      for (const orderDoc of ordersQuery.docs) {
+        const orderData = orderDoc.data();
+
+        // Fetch adminOrders subcollection for this order
+        const adminOrdersSnapshot = await db.collection("orders")
+          .doc(orderDoc.id)
+          .collection("adminOrders")
+          .get();
+
+        let orderQuantityPaid = 0;
+        let orderSummaryPaid = 0;
+
+        adminOrdersSnapshot.forEach(adminOrderDoc => {
+          const adminData = adminOrderDoc.data();
+          orderQuantityPaid += adminData.quantityPaid || 0;
+          orderSummaryPaid += adminData.summaryPaid || 0;
+        });
+
+        overallQuantityPaid += orderQuantityPaid;
+        overallSummaryPaid += orderSummaryPaid;
+
+        html += `
+          <div style="border-bottom:1px solid #ddd; padding:10px 0;">
+            <p><strong>Order Number:</strong> ${orderData.orderNumber || "N/A"}</p>
+            <p><strong>Order Date:</strong> ${orderData.createdAt?.toDate().toLocaleString() || "N/A"}</p>
+            <p><strong>Product:</strong> ${orderData.product}</p>
+            <p><strong>Total Quantity Ordered:</strong> ${orderData.quantity}</p>
+            <p><strong>Quantity Paid:</strong> ${orderQuantityPaid}</p>
+            <p><strong>Summary Paid:</strong> ₱${orderSummaryPaid.toFixed(2)}</p>
+          </div>
+        `;
+      }
+
+      html += `
+        <hr />
+        <p><strong>Overall Quantity Paid:</strong> ${overallQuantityPaid}</p>
+        <p><strong>Overall Summary Paid:</strong> ₱${overallSummaryPaid.toFixed(2)}</p>
+      `;
+
+      orderHistoryDetails.innerHTML = html;
+
+    } catch (error) {
+      orderHistoryDetails.innerHTML = `<p>Error loading order history: ${error.message}</p>`;
+      console.error("Error fetching order history:", error);
+    }
+  });
+
+  closeModalBtn.addEventListener("click", () => {
+    orderHistoryModal.style.display = "none";
+  });
+
+  // Close modal if user clicks outside the modal content
+  window.onclick = function(event) {
+    if (event.target === orderHistoryModal) {
+      orderHistoryModal.style.display = "none";
+    }
+  }
 </script>
+
 
 </body>
 </html>
