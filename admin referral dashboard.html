@@ -4,169 +4,349 @@
   <meta charset="UTF-8" />
   <title>Admin Dashboard - User Management</title>
   <style>
-    /* ... your existing CSS unchanged ... */
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&display=swap');
+
     body {
-      font-family: Arial, sans-serif;
+      font-family: 'Poppins', sans-serif;
       margin: 0;
       display: flex;
-      background-color: #f2f2f2;
+      background: #f3f4f6;
+      min-height: 100vh;
+      color: #2c3e50;
+      flex-direction: row;
     }
+
     .sidebar {
-      width: 200px;
-      background-color: #2c3e50;
+      width: 220px;
+      background: linear-gradient(180deg, #3949ab, #5c6bc0);
       height: 100vh;
-      padding-top: 20px;
-      box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+      padding-top: 30px;
+      box-shadow: 2px 0 8px rgba(0,0,0,0.15);
       display: flex;
       flex-direction: column;
+      user-select: none;
     }
+
     .sidebar button {
       display: block;
       width: 100%;
-      padding: 10px 20px;
-      background-color: #34495e;
+      padding: 14px 24px;
+      background-color: transparent;
       color: white;
       border: none;
       text-align: left;
       cursor: pointer;
-      margin-bottom: 5px;
+      margin-bottom: 10px;
       font-size: 16px;
-      transition: background-color 0.3s ease;
+      font-weight: 600;
+      border-radius: 8px;
+      transition: background-color 0.3s ease, box-shadow 0.3s ease;
     }
+
     .sidebar button:hover,
     .sidebar button.active {
-      background-color: #3d566e;
+      background-color: #ffeb3b;
+      color: #3949ab;
+      box-shadow: 0 0 12px #ffeb3baa;
     }
-    .content {
+
+    .main-container {
       flex-grow: 1;
-      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      padding: 20px 40px;
       overflow-x: auto;
+      background: white;
+      border-radius: 20px 0 0 20px;
+      box-shadow: 0 6px 25px rgba(0,0,0,0.1);
+      min-width: 0; /* prevent overflow */
+      height: 100vh;
     }
+
+    .header-welcome {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      padding: 0 10px;
+      font-size: 18px;
+      font-weight: 600;
+      color: #3949ab;
+      background-color: #f3f4f6;
+      border-radius: 12px;
+      height: 50px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      user-select: none;
+    }
+
+    .welcome-text {}
+
+    #admin-name {
+      cursor: pointer;
+      border-bottom: 1.5px dashed #3949ab;
+      transition: color 0.3s ease;
+    }
+
+    #admin-name:hover {
+      color: #5c6bc0;
+    }
+
+    #logout-btn {
+      background-color: #d9534f;
+      border: none;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      box-shadow: 0 0 12px #d9534faa;
+      transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    #logout-btn:hover {
+      background-color: #c9302c;
+      box-shadow: 0 0 20px #c9302cbb;
+    }
+
     section {
       background: white;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-      margin-bottom: 30px;
+      padding: 28px 32px;
+      border-radius: 18px;
+      box-shadow: 0 8px 28px rgba(0,0,0,0.1);
+      margin-bottom: 40px;
+      transition: box-shadow 0.3s ease;
+      overflow-x: auto;
     }
+
+    section:hover {
+      box-shadow: 0 12px 40px rgba(0,0,0,0.12);
+    }
+
     h2 {
-      color: #333;
+      color: #3949ab;
       margin-top: 0;
+      font-weight: 700;
+      letter-spacing: 0.6px;
+      margin-bottom: 20px;
     }
+
     table {
       width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
+      border-collapse: separate;
+      border-spacing: 0 8px;
+      font-weight: 500;
+      font-size: 15px;
+      table-layout: auto;
     }
+
     th, td {
-      padding: 10px;
-      border: 1px solid #ccc;
+      padding: 14px 16px;
       text-align: left;
       vertical-align: middle;
     }
-    input[type="number"] {
-      width: 60px;
-      padding: 4px;
-      font-size: 14px;
+
+    th {
+      background-color: #6c5ce7;
+      color: white;
+      font-weight: 600;
+      border-top-left-radius: 12px;
+      border-top-right-radius: 12px;
     }
-    .approve-btn {
+
+    tbody tr {
+      background-color: #f7f8fb;
+      transition: background-color 0.3s ease;
+      border-radius: 12px;
+    }
+
+    tbody tr:hover {
+      background-color: #e0e3fc;
+    }
+
+    tbody tr td:first-child {
+      border-top-left-radius: 12px;
+      border-bottom-left-radius: 12px;
+    }
+
+    tbody tr td:last-child {
+      border-top-right-radius: 12px;
+      border-bottom-right-radius: 12px;
+    }
+
+    input[type="number"] {
+      width: 70px;
+      padding: 6px 10px;
+      font-size: 14px;
+      border-radius: 8px;
+      border: 1.5px solid #ccc;
+      font-weight: 500;
+      transition: border-color 0.3s ease;
+      outline: none;
+    }
+
+    input[type="number"]:focus {
+      border-color: #6c5ce7;
+      box-shadow: 0 0 12px #6c5ce7aa;
+      background-color: #fafaff;
+    }
+
+    button.approve-btn,
+    button.deny-btn,
+    button.set-paid-btn {
+      padding: 8px 14px;
+      font-size: 14px;
+      border-radius: 8px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      transition: background-color 0.3s ease, box-shadow 0.3s ease;
+      user-select: none;
+    }
+
+    button.approve-btn {
       background-color: #5cb85c;
       color: white;
-      border: none;
-      padding: 5px 10px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 14px;
-      margin-right: 5px;
+      margin-right: 8px;
+      box-shadow: 0 0 14px #5cb85caa;
     }
-    .deny-btn {
+
+    button.approve-btn:hover {
+      background-color: #4cae4c;
+      box-shadow: 0 0 20px #4cae4cbb;
+    }
+
+    button.deny-btn {
       background-color: #d9534f;
       color: white;
-      border: none;
-      padding: 5px 10px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 14px;
+      box-shadow: 0 0 14px #d9534faa;
     }
-    .set-paid-btn {
+
+    button.deny-btn:hover {
+      background-color: #c9302c;
+      box-shadow: 0 0 20px #c9302cbb;
+    }
+
+    button.set-paid-btn {
       background-color: #007bff;
       color: white;
-      padding: 5px 10px;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 14px;
-      margin-left: 5px;
+      margin-left: 8px;
+      box-shadow: 0 0 14px #007bffaa;
+    }
+
+    button.set-paid-btn:hover {
+      background-color: #0056b3;
+      box-shadow: 0 0 20px #0056b3cc;
+    }
+
+    /* Responsive for smaller screens */
+    @media (max-width: 768px) {
+      body {
+        flex-direction: column;
+      }
+      .sidebar {
+        width: 100%;
+        height: auto;
+        flex-direction: row;
+        padding: 10px 0;
+        justify-content: center;
+      }
+      .sidebar button {
+        margin: 0 10px;
+        flex-grow: 1;
+        text-align: center;
+      }
+      .main-container {
+        border-radius: 0 0 20px 20px;
+        padding: 20px;
+        margin-top: 20px;
+        height: auto;
+      }
+      table, th, td {
+        font-size: 14px;
+      }
+      input[type="number"] {
+        width: 50px;
+      }
     }
   </style>
 </head>
 <body>
 
-<div class="sidebar">
-  <button id="btn-pending" onclick="toggleSection('pending')">Pending Approvals</button>
-  <button id="btn-approved" onclick="toggleSection('approved')">Approved Users</button>
-</div>
+  <div class="sidebar">
+    <button id="btn-pending" onclick="toggleSection('pending')" class="active">Pending Approvals</button>
+    <button id="btn-approved" onclick="toggleSection('approved')">Approved Users</button>
+  </div>
 
-<div class="content">
-  <section id="pending-section" style="display:none">
-    <h2>Pending User Approvals</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Email</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody id="pending-user-list">
-        <tr><td colspan="3">Loading...</td></tr>
-      </tbody>
-    </table>
-  </section>
+  <div class="main-container">
 
-  <section id="approved-section" style="display:none">
-    <h2>Approved Users</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Email</th>
-          <th>Revoke Approval</th>
-        </tr>
-      </thead>
-      <tbody id="approved-user-list">
-        <tr><td colspan="3">Loading...</td></tr>
-      </tbody>
-    </table>
-  </section>
+    <div class="header-welcome">
+      <div class="welcome-text">
+        Welcome, <span id="admin-name" title="You are logged in as admin">Admin</span>!
+      </div>
+      <button id="logout-btn" title="Logout">Logout</button>
+    </div>
 
-  <section id="order-summary-section">
-    <h2>Order Summary</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>Order Number</th>
-          <th>Username</th>
-          <th>Referral Code</th>
-          <th>Product</th>
-          <th>Quantity</th>
-          <th>Price</th>
-          <th>Referral Names</th>
-          <th>Date</th>
-          <th>Quantity Paid</th>
-          <th>Summary Paid</th>
-        </tr>
-      </thead>
-      <tbody id="order-list">
-        <tr><td colspan="10">Loading...</td></tr>
-      </tbody>
-    </table>
-  </section>
-</div>
+    <section id="pending-section">
+      <h2>Pending User Approvals</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="pending-user-list">
+          <tr><td colspan="3">Loading...</td></tr>
+        </tbody>
+      </table>
+    </section>
 
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+    <section id="approved-section" style="display:none;">
+      <h2>Approved Users</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Revoke Approval</th>
+          </tr>
+        </thead>
+        <tbody id="approved-user-list">
+          <tr><td colspan="3">Loading...</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="order-summary-section" style="display:none;">
+      <h2>Order Summary</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Order Number</th>
+            <th>Username</th>
+            <th>Referral Code</th>
+            <th>Product</th>
+            <th>Quantity</th>
+            <th>Price</th>
+            <th>Referral Names</th>
+            <th>Date</th>
+            <th>Quantity Paid</th>
+            <th>Summary Paid</th>
+          </tr>
+        </thead>
+        <tbody id="order-list">
+          <tr><td colspan="10">Loading...</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+  </div>
+<!-- Firebase SDKs needed for your code -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 
 <script>
   const firebaseConfig = {
@@ -220,7 +400,6 @@
   }
 
   async function fetchUsers() {
-    // Pending users
     const pendingSnapshot = await db.collection('users').where('approved', '==', false).get();
     pendingList.innerHTML = pendingSnapshot.empty
       ? "<tr><td colspan='3'>No pending users.</td></tr>"
@@ -239,7 +418,6 @@
         </tr>`;
     });
 
-    // Approved users
     const approvedSnapshot = await db.collection('users').where('approved', '==', true).get();
     approvedList.innerHTML = approvedSnapshot.empty
       ? "<tr><td colspan='3'>No approved users.</td></tr>"
@@ -333,30 +511,25 @@
     document.getElementById(`summaryPaid-${rowId}`).textContent = `₱${totalPaid.toFixed(2)}`;
 
     try {
-      // Update the main order doc
       await db.collection('orders').doc(rowId).update({
         quantityPaid: qty,
         summaryPaid: totalPaid,
       });
 
-      // Also add a document to Admin Orders subcollection under this order
-      // Let's add with an autogenerated ID to keep history of admin payments
-await db.collection('orders').doc(rowId).collection('adminOrders').add({
-  updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-  quantityPaid: qty,
-  summaryPaid: totalPaid,
-  updatedBy: firebase.auth().currentUser.uid || 'unknown',
-});
+      await db.collection('orders').doc(rowId).collection('adminOrders').doc('payment').set({
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        quantityPaid: qty,
+        summaryPaid: totalPaid,
+        updatedBy: firebase.auth().currentUser?.uid || 'unknown',
+      });
 
-alert("Payment info updated and saved to Admin Orders.");
-fetchOrders();
-} catch (error) {
-  alert("Failed to update payment info: " + error.message);
-}
-
+      alert("Payment info updated and saved to Admin Orders.");
+      fetchOrders();
+    } catch (error) {
+      alert("Failed to update payment info: " + error.message);
+    }
   }
 
-  // On page load
   firebase.auth().onAuthStateChanged(async user => {
     if (!user) {
       window.location.href = "Referral Login.html";
@@ -371,10 +544,22 @@ fetchOrders();
       return;
     }
 
+    const adminName = userDoc.data().name || "Admin";
+    document.getElementById("admin-name").textContent = adminName;
+
     toggleSection(''); // show order summary by default
     fetchUsers();
     fetchOrders();
   });
+
+  // *** LOGOUT BUTTON HANDLER ADDED HERE ***
+  document.getElementById('logout-btn').addEventListener('click', async () => {
+    if (confirm('Are you sure you want to logout?')) {
+      await firebase.auth().signOut();
+      window.location.href = 'Referral Login.html';
+    }
+  });
 </script>
+
 </body>
 </html>
