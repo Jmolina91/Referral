@@ -3,279 +3,543 @@
 <head>
   <meta charset="UTF-8" />
   <title>Admin Dashboard - User Management</title>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&display=swap');
+ <style>
+  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&display=swap');
 
+  body {
+    font-family: 'Poppins', sans-serif;
+    margin: 0;
+    display: flex;
+    background: #f3f4f6;
+    min-height: 100vh;
+    color: #2c3e50;
+    flex-direction: row;
+  }
+
+  .sidebar {
+    width: 220px;
+    background: linear-gradient(180deg, #3949ab, #5c6bc0);
+    height: 100vh;
+    padding-top: 30px;
+    box-shadow: 2px 0 8px rgba(0,0,0,0.15);
+    display: flex;
+    flex-direction: column;
+    user-select: none;
+  }
+
+  .sidebar button {
+    display: block;
+    width: 100%;
+    padding: 14px 24px;
+    background-color: transparent;
+    color: white;
+    border: none;
+    text-align: left;
+    cursor: pointer;
+    margin-bottom: 10px;
+    font-size: 16px;
+    font-weight: 600;
+    border-radius: 8px;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .sidebar button:hover,
+  .sidebar button.active {
+    background-color: #ffeb3b;
+    color: #3949ab;
+    box-shadow: 0 0 12px #ffeb3baa;
+  }
+
+  .main-container {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 20px 40px;
+    overflow-x: auto;
+    background: white;
+    border-radius: 20px 0 0 20px;
+    box-shadow: 0 6px 25px rgba(0,0,0,0.1);
+    min-width: 0;
+    height: 100vh;
+  }
+
+  .header-welcome {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    padding: 0 10px;
+    font-size: 18px;
+    font-weight: 600;
+    color: #3949ab;
+    background-color: #f3f4f6;
+    border-radius: 12px;
+    height: 50px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    user-select: none;
+  }
+
+  #admin-name {
+    cursor: pointer;
+    border-bottom: 1.5px dashed #3949ab;
+    transition: color 0.3s ease;
+  }
+
+  #admin-name:hover {
+    color: #5c6bc0;
+  }
+
+  #logout-btn {
+    background-color: #d9534f;
+    border: none;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    box-shadow: 0 0 12px #d9534faa;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  #logout-btn:hover {
+    background-color: #c9302c;
+    box-shadow: 0 0 20px #c9302cbb;
+  }
+
+  section {
+    background: white;
+    padding: 28px 32px;
+    border-radius: 18px;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.1);
+    margin-bottom: 40px;
+    transition: box-shadow 0.3s ease;
+    overflow-x: auto;
+  }
+
+  section:hover {
+    box-shadow: 0 12px 40px rgba(0,0,0,0.12);
+  }
+
+  h2 {
+    color: #3949ab;
+    margin-top: 0;
+    font-weight: 700;
+    letter-spacing: 0.6px;
+    margin-bottom: 20px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 8px;
+    font-weight: 500;
+    font-size: 15px;
+    table-layout: auto;
+  }
+
+  th, td {
+    padding: 14px 16px;
+    text-align: left;
+    vertical-align: middle;
+  }
+
+  th {
+    background-color: #6c5ce7;
+    color: white;
+    font-weight: 600;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+  }
+
+  tbody tr {
+    background-color: #f7f8fb;
+    transition: background-color 0.3s ease;
+    border-radius: 12px;
+  }
+
+  tbody tr:hover {
+    background-color: #e0e3fc;
+  }
+
+  tbody tr td:first-child {
+    border-top-left-radius: 12px;
+    border-bottom-left-radius: 12px;
+  }
+
+  tbody tr td:last-child {
+    border-top-right-radius: 12px;
+    border-bottom-right-radius: 12px;
+  }
+
+  input[type="number"] {
+    width: 70px;
+    padding: 6px 10px;
+    font-size: 14px;
+    border-radius: 8px;
+    border: 1.5px solid #ccc;
+    font-weight: 500;
+    transition: border-color 0.3s ease;
+    outline: none;
+  }
+
+  input[type="number"]:focus {
+    border-color: #6c5ce7;
+    box-shadow: 0 0 12px #6c5ce7aa;
+    background-color: #fafaff;
+  }
+
+  button.approve-btn {
+  background-color: #5cb85c; /* green */
+  color: white;
+  padding: 8px 14px;
+  font-size: 14px;
+  border-radius: 8px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 0 14px #5cb85caa;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  user-select: none;
+  margin-right: 8px;
+}
+
+button.approve-btn:hover {
+  background-color: #4cae4c;
+  box-shadow: 0 0 20px #4cae4cbb;
+}
+
+button.deny-btn {
+  background-color: #d9534f; /* red */
+  color: white;
+  padding: 8px 14px;
+  font-size: 14px;
+  border-radius: 8px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 0 14px #d9534faa;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  user-select: none;
+}
+
+button.deny-btn:hover {
+  background-color: #c9302c;
+  box-shadow: 0 0 20px #c9302cbb;
+}
+
+
+  /* NEW: Clickable order number and expandable row styling */
+  .order-number {
+    color: #3949ab;
+    text-decoration: underline;
+    cursor: pointer;
+    font-weight: 600;
+  }
+
+  .order-details-row {
+    display: none;
+    background-color: #eef0fd;
+  }
+
+  .order-details-row.active {
+    display: table-row;
+    animation: fadeIn 0.3s ease-in-out;
+  }
+
+  .order-details-cell {
+    padding: 16px;
+    border-top: 1px solid #ccc;
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
+  }
+
+  .order-details {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 14px;
+  }
+
+  .order-details strong {
+    color: #3949ab;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  /* Responsive for smaller screens */
+  @media (max-width: 768px) {
     body {
-      font-family: 'Poppins', sans-serif;
-      margin: 0;
-      display: flex;
-      background: #f3f4f6;
-      min-height: 100vh;
-      color: #2c3e50;
-      flex-direction: row;
+      flex-direction: column;
     }
 
     .sidebar {
-      width: 220px;
-      background: linear-gradient(180deg, #3949ab, #5c6bc0);
-      height: 100vh;
-      padding-top: 30px;
-      box-shadow: 2px 0 8px rgba(0,0,0,0.15);
-      display: flex;
-      flex-direction: column;
-      user-select: none;
+      width: 100%;
+      height: auto;
+      flex-direction: row;
+      padding: 10px 0;
+      justify-content: center;
     }
 
     .sidebar button {
-      display: block;
-      width: 100%;
-      padding: 14px 24px;
-      background-color: transparent;
-      color: white;
-      border: none;
-      text-align: left;
-      cursor: pointer;
-      margin-bottom: 10px;
-      font-size: 16px;
-      font-weight: 600;
-      border-radius: 8px;
-      transition: background-color 0.3s ease, box-shadow 0.3s ease;
-    }
-
-    .sidebar button:hover,
-    .sidebar button.active {
-      background-color: #ffeb3b;
-      color: #3949ab;
-      box-shadow: 0 0 12px #ffeb3baa;
+      margin: 0 10px;
+      flex-grow: 1;
+      text-align: center;
     }
 
     .main-container {
-      flex-grow: 1;
-      display: flex;
-      flex-direction: column;
-      padding: 20px 40px;
-      overflow-x: auto;
-      background: white;
-      border-radius: 20px 0 0 20px;
-      box-shadow: 0 6px 25px rgba(0,0,0,0.1);
-      min-width: 0; /* prevent overflow */
-      height: 100vh;
+      border-radius: 0 0 20px 20px;
+      padding: 20px;
+      margin-top: 20px;
+      height: auto;
     }
 
-    .header-welcome {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 24px;
-      padding: 0 10px;
-      font-size: 18px;
-      font-weight: 600;
-      color: #3949ab;
-      background-color: #f3f4f6;
-      border-radius: 12px;
-      height: 50px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      user-select: none;
-    }
 
-    .welcome-text {}
+.order-details-row td {
+  background-color: #f1f3f5;
+  border-radius: 12px;
+  box-shadow: inset 0 0 10px rgba(0,0,0,0.05);
+}
+.order-details-row p {
+  margin: 6px 0;
+}
 
-    #admin-name {
-      cursor: pointer;
-      border-bottom: 1.5px dashed #3949ab;
-      transition: color 0.3s ease;
-    }
 
-    #admin-name:hover {
-      color: #5c6bc0;
-    }
 
-    #logout-btn {
-      background-color: #d9534f;
-      border: none;
-      color: white;
-      padding: 8px 16px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: 600;
-      box-shadow: 0 0 12px #d9534faa;
-      transition: background-color 0.3s ease, box-shadow 0.3s ease;
-    }
 
-    #logout-btn:hover {
-      background-color: #c9302c;
-      box-shadow: 0 0 20px #c9302cbb;
-    }
+  /* Base style */
+  .approve-btn, .deny-btn {
+    padding: 8px 14px;
+    border: none;
+    border-radius: 6px;
+    color: #fff;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
 
-    section {
-      background: white;
-      padding: 28px 32px;
-      border-radius: 18px;
-      box-shadow: 0 8px 28px rgba(0,0,0,0.1);
-      margin-bottom: 40px;
-      transition: box-shadow 0.3s ease;
-      overflow-x: auto;
-    }
+  /* Approve Button Design */
+  .approve-btn {
+    background: linear-gradient(135deg, #4CAF50, #2E7D32);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+  }
 
-    section:hover {
-      box-shadow: 0 12px 40px rgba(0,0,0,0.12);
-    }
+  /* Deny Button Design */
+  .deny-btn {
+    background: linear-gradient(135deg, #e53935, #b71c1c);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+  }
 
-    h2 {
-      color: #3949ab;
-      margin-top: 0;
-      font-weight: 700;
-      letter-spacing: 0.6px;
-      margin-bottom: 20px;
-    }
+  /* Hover Effects */
+  .approve-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.5);
+  }
 
-    table {
-      width: 100%;
-      border-collapse: separate;
-      border-spacing: 0 8px;
-      font-weight: 500;
-      font-size: 15px;
-      table-layout: auto;
-    }
+  .deny-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(229, 57, 53, 0.5);
+  }
 
-    th, td {
-      padding: 14px 16px;
-      text-align: left;
-      vertical-align: middle;
-    }
 
-    th {
-      background-color: #6c5ce7;
-      color: white;
-      font-weight: 600;
-      border-top-left-radius: 12px;
-      border-top-right-radius: 12px;
-    }
 
-    tbody tr {
-      background-color: #f7f8fb;
-      transition: background-color 0.3s ease;
-      border-radius: 12px;
-    }
 
-    tbody tr:hover {
-      background-color: #e0e3fc;
-    }
 
-    tbody tr td:first-child {
-      border-top-left-radius: 12px;
-      border-bottom-left-radius: 12px;
-    }
 
-    tbody tr td:last-child {
-      border-top-right-radius: 12px;
-      border-bottom-right-radius: 12px;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#user-info, #withdraw-section {
+  background: white;
+  border-radius: 18px;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.1);
+  padding: 28px 32px;
+  max-width: 420px;
+  margin: 0 auto 30px auto;
+  font-family: 'Poppins', sans-serif;
+  color: #2c3e50;
+}
+
+#user-info p {
+  font-weight: 600;
+  font-size: 1.1rem;
+  margin: 0;
+  user-select: none;
+}
+
+#withdraw-section h3 {
+  font-weight: 700;
+  color: #3949ab;
+  margin-top: 0;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #6c5ce7;
+  padding-bottom: 6px;
+  user-select: none;
+}
+
+#commission-amount {
+  color: #27ae60;
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+#withdraw-btn {
+  background-color: #6c5ce7;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  margin-top: 12px;
+  user-select: none;
+}
+
+#withdraw-btn:disabled {
+  background-color: #b2b7ff;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+#withdraw-btn:not(:disabled):hover {
+  background-color: #4c4ed9;
+  box-shadow: 0 0 15px #4c4ed9aa;
+}
+
+#withdraw-message {
+  margin-top: 15px;
+  font-weight: 600;
+  font-size: 1rem;
+  user-select: none;
+}
+
+#user-info, #withdraw-section {
+  background: white;
+  border-radius: 18px;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.1);
+  padding: 28px 32px;
+  max-width: 420px;
+  margin: 0 auto 30px auto;
+  font-family: 'Poppins', sans-serif;
+  color: #2c3e50;
+}
+
+#user-info p {
+  font-weight: 600;
+  font-size: 1.1rem;
+  margin: 0;
+  user-select: none;
+}
+
+#withdraw-section h3 {
+  font-weight: 700;
+  color: #3949ab;
+  margin-top: 0;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #6c5ce7;
+  padding-bottom: 6px;
+  user-select: none;
+}
+
+#commission-amount {
+  color: #27ae60;
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+#withdraw-btn {
+  background-color: #6c5ce7;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  margin-top: 12px;
+  user-select: none;
+}
+
+#withdraw-btn:disabled {
+  background-color: #b2b7ff;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+#withdraw-btn:not(:disabled):hover {
+  background-color: #4c4ed9;
+  box-shadow: 0 0 15px #4c4ed9aa;
+}
+
+#withdraw-message {
+  margin-top: 15px;
+  font-weight: 600;
+  font-size: 1rem;
+  user-select: none;
+}
+
+
+
+
+
+    table, th, td {
+      font-size: 14px;
     }
 
     input[type="number"] {
-      width: 70px;
-      padding: 6px 10px;
-      font-size: 14px;
-      border-radius: 8px;
-      border: 1.5px solid #ccc;
-      font-weight: 500;
-      transition: border-color 0.3s ease;
-      outline: none;
+      width: 50px;
     }
 
-    input[type="number"]:focus {
-      border-color: #6c5ce7;
-      box-shadow: 0 0 12px #6c5ce7aa;
-      background-color: #fafaff;
+    .order-details {
+      font-size: 15px;
     }
 
-    button.approve-btn,
-    button.deny-btn,
-    button.set-paid-btn {
-      padding: 8px 14px;
-      font-size: 14px;
-      border-radius: 8px;
-      font-weight: 600;
-      border: none;
-      cursor: pointer;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-      transition: background-color 0.3s ease, box-shadow 0.3s ease;
-      user-select: none;
+    .order-details input[type="number"] {
+      width: 60px;
     }
 
-    button.approve-btn {
-      background-color: #5cb85c;
-      color: white;
-      margin-right: 8px;
-      box-shadow: 0 0 14px #5cb85caa;
+    .order-details button {
+      margin-top: 6px;
     }
+  }
+</style>
 
-    button.approve-btn:hover {
-      background-color: #4cae4c;
-      box-shadow: 0 0 20px #4cae4cbb;
-    }
-
-    button.deny-btn {
-      background-color: #d9534f;
-      color: white;
-      box-shadow: 0 0 14px #d9534faa;
-    }
-
-    button.deny-btn:hover {
-      background-color: #c9302c;
-      box-shadow: 0 0 20px #c9302cbb;
-    }
-
-    button.set-paid-btn {
-      background-color: #007bff;
-      color: white;
-      margin-left: 8px;
-      box-shadow: 0 0 14px #007bffaa;
-    }
-
-    button.set-paid-btn:hover {
-      background-color: #0056b3;
-      box-shadow: 0 0 20px #0056b3cc;
-    }
-
-    /* Responsive for smaller screens */
-    @media (max-width: 768px) {
-      body {
-        flex-direction: column;
-      }
-      .sidebar {
-        width: 100%;
-        height: auto;
-        flex-direction: row;
-        padding: 10px 0;
-        justify-content: center;
-      }
-      .sidebar button {
-        margin: 0 10px;
-        flex-grow: 1;
-        text-align: center;
-      }
-      .main-container {
-        border-radius: 0 0 20px 20px;
-        padding: 20px;
-        margin-top: 20px;
-        height: auto;
-      }
-      table, th, td {
-        font-size: 14px;
-      }
-      input[type="number"] {
-        width: 50px;
-      }
-    }
-  </style>
 </head>
 <body>
 
   <div class="sidebar">
     <button id="btn-pending" onclick="toggleSection('pending')" class="active">Pending Approvals</button>
     <button id="btn-approved" onclick="toggleSection('approved')">Approved Users</button>
+    <button id="btn-commission" onclick="toggleSection('commission')">User Commissions</button>
+    <button id="btn-withdrawals" onclick="toggleSection('withdrawals')">Pending Withdrawal Requests</button>
+
   </div>
 
   <div class="main-container">
@@ -319,28 +583,127 @@
       </table>
     </section>
 
-    <section id="order-summary-section" style="display:none;">
-      <h2>Order Summary</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>Order Number</th>
-            <th>Username</th>
-            <th>Referral Code</th>
-            <th>Product</th>
-            <th>Quantity</th>
-            <th>Price</th>
-            <th>Referral Names</th>
-            <th>Date</th>
-            <th>Quantity Paid</th>
-            <th>Summary Paid</th>
-          </tr>
-        </thead>
-        <tbody id="order-list">
-          <tr><td colspan="10">Loading...</td></tr>
-        </tbody>
-      </table>
-    </section>
+
+<section id="commission-section" style="display:none;">
+  <h2>User Earned Commissions</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Earned Commission (₱)</th>
+      </tr>
+    </thead>
+    <tbody id="commission-list">
+      <tr><td colspan="3">Loading...</td></tr>
+    </tbody>
+  </table>
+
+  <!-- Container to show order summary for selected user -->
+  <h3 id="order-summary-title" style="margin-top: 30px; display:none;">Order Summary for <span id="selected-user-name"></span></h3>
+  <table id="user-order-summary" style="width: 100%; border-collapse: collapse; display:none;">
+    <thead>
+      <tr>
+        <th>Order Number</th>
+        <th>Product</th>
+        <th>Quantity</th>
+        <th>Quantity Paid</th>
+        <th>Last Updated</th>
+        <th>Total Price</th>
+	<th>Commission</th>
+      </tr>
+    </thead>
+    <tbody id="user-order-list">
+      <!-- Orders will be loaded here -->
+    </tbody>
+  </table>
+</section>
+<section id="withdrawals-section" style="display:none;">
+  <h2>Pending Withdrawal Requests</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>User</th>
+        <th>Amount (₱)</th>
+        <th>Requested At</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="withdrawal-request-list">
+      <!-- Dynamic pending requests will be inserted here -->
+    </tbody>
+  </table>
+
+  <hr style="margin: 40px 0; border: 1px solid #ccc;">
+
+  <h2>Approved Withdrawal Requests</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>User</th>
+        <th>Amount (₱)</th>
+        <th>Approved At</th>
+      </tr>
+    </thead>
+    <tbody id="approved-withdrawal-list">
+      <!-- Dynamic approved requests will be inserted here -->
+    </tbody>
+  </table>
+
+  <hr style="margin: 40px 0; border: 1px solid #ccc;">
+
+  <h2>Denied Withdrawal Requests</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>User</th>
+        <th>Amount (₱)</th>
+        <th>Denied At</th>
+        <th>Reason</th>
+      </tr>
+    </thead>
+    <tbody id="denied-withdrawal-list">
+      <!-- Dynamic denied requests will be inserted here -->
+    </tbody>
+  </table>
+</section>
+
+
+
+
+
+
+
+
+
+
+
+  <section id="order-summary-section" style="display:none;">
+  <h2>Order Summary</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Order Number</th>
+        <th>Username</th>
+        <th>Referral Code</th>
+	<th>Product</th>
+        <th>Flavor</th>
+        <th>Quantity Ordered</th>
+	<th>Price</th>
+        <th>Referrals</th>
+        <th>Order Date</th>
+        <th>Paid Quantity</th>
+	<th>Amount Paid</th>
+
+      </tr>
+    </thead>
+    <tbody id="order-list">
+      <!-- Orders populated here -->
+    </tbody>
+  </table>
+</section>
+
+
 
   </div>
 <!-- Firebase SDKs needed for your code -->
@@ -372,32 +735,357 @@
   const btnPending = document.getElementById("btn-pending");
   const btnApproved = document.getElementById("btn-approved");
 
+const withdrawalPendingList = document.getElementById("withdrawal-request-list");
+const withdrawalApprovedList = document.getElementById("approved-withdrawal-list");
+const withdrawalDeniedList = document.getElementById("denied-withdrawal-list");
+
+  // New reference to flavors list tbody
+  const flavorsList = document.getElementById("flavors-list");
+
+
+
+
+db.collection("withdrawals").onSnapshot((snapshot) => {
+  // Clear previous data
+  withdrawalPendingList.innerHTML = "";
+  withdrawalApprovedList.innerHTML = "";
+  withdrawalDeniedList.innerHTML = "";
+
+  snapshot.forEach((doc) => {
+    const data = doc.data();
+    const row = document.createElement("tr");
+
+    const userCell = document.createElement("td");
+    userCell.textContent = data.userName || data.email || "Unknown User";
+
+    const amountCell = document.createElement("td");
+    amountCell.textContent = `₱${data.amount}`;
+
+    if (data.status === "pending") {
+      const requestedAtCell = document.createElement("td");
+      requestedAtCell.textContent = data.requestedAt?.toDate().toLocaleString() || "N/A";
+
+      const actionsCell = document.createElement("td");
+
+const approveBtn = document.createElement("button");
+approveBtn.textContent = "Approve";
+approveBtn.onclick = () => handleApprove(doc.id);
+
+const denyBtn = document.createElement("button");
+denyBtn.textContent = "Deny";
+denyBtn.onclick = () => handleDeny(doc.id);
+
+actionsCell.appendChild(approveBtn);
+actionsCell.appendChild(document.createTextNode(" "));
+actionsCell.appendChild(denyBtn);
+
+
+      row.appendChild(userCell);
+      row.appendChild(amountCell);
+      row.appendChild(requestedAtCell);
+      row.appendChild(actionsCell);
+      withdrawalPendingList.appendChild(row);
+    }
+
+    if (data.status === "approved") {
+      const approvedAtCell = document.createElement("td");
+      approvedAtCell.textContent = data.approvedAt?.toDate().toLocaleString() || "N/A";
+
+      row.appendChild(userCell);
+      row.appendChild(amountCell);
+      row.appendChild(approvedAtCell);
+      withdrawalApprovedList.appendChild(row);
+    }
+
+    if (data.status === "denied") {
+      const deniedAtCell = document.createElement("td");
+      deniedAtCell.textContent = data.deniedAt?.toDate().toLocaleString() || "N/A";
+
+      const reasonCell = document.createElement("td");
+      reasonCell.textContent = data.reason || "No reason provided";
+
+      row.appendChild(userCell);
+      row.appendChild(amountCell);
+      row.appendChild(deniedAtCell);
+      row.appendChild(reasonCell);
+      withdrawalDeniedList.appendChild(row);
+    }
+  });
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function handleDeny(withdrawalId) {
+  const reason = prompt("Enter the reason for denial:");
+  if (reason === null || reason.trim() === "") {
+    alert("Denial cancelled. Reason is required.");
+    return;
+  }
+
+  db.collection("withdrawals").doc(withdrawalId).update({
+    status: "denied",
+    deniedAt: firebase.firestore.Timestamp.now(),
+    reason: reason
+  }).then(() => {
+    alert("Withdrawal denied successfully.");
+  }).catch((error) => {
+    console.error("Error denying withdrawal:", error);
+    alert("Failed to deny withdrawal.");
+  });
+}
+
+function handleApprove(withdrawalId) {
+  db.collection("withdrawals").doc(withdrawalId).update({
+    status: "approved",
+    approvedAt: firebase.firestore.Timestamp.now()
+  }).then(() => {
+    alert("Withdrawal approved successfully.");
+  }).catch((error) => {
+    console.error("Error approving withdrawal:", error);
+    alert("Failed to approve withdrawal.");
+  });
+}
+
+
+
+
+
+
+
+
+
+
+
+
   function clearActiveButtons() {
     btnPending.classList.remove('active');
     btnApproved.classList.remove('active');
   }
 
   function toggleSection(section) {
-    if (section === "pending") {
-      pendingSection.style.display = "block";
-      approvedSection.style.display = "none";
-      orderSummarySection.style.display = "none";
-      clearActiveButtons();
-      btnPending.classList.add('active');
-    } else if (section === "approved") {
-      pendingSection.style.display = "none";
-      approvedSection.style.display = "block";
-      orderSummarySection.style.display = "none";
-      clearActiveButtons();
-      btnApproved.classList.add('active');
-    } else {
-      // Hide both and show order summary
-      pendingSection.style.display = "none";
-      approvedSection.style.display = "none";
-      orderSummarySection.style.display = "block";
-      clearActiveButtons();
-    }
+  // Hide all sections first
+  pendingSection.style.display = "none";
+  approvedSection.style.display = "none";
+  orderSummarySection.style.display = "none";
+  document.getElementById('commission-section').style.display = "none";
+  document.getElementById('withdrawals-section').style.display = "none";
+  
+  // Remove all active button styles
+  clearActiveButtons();
+  document.getElementById('btn-commission').classList.remove('active');
+  document.getElementById('btn-withdrawals').classList.remove('active');
+
+  if (section === "pending") {
+    pendingSection.style.display = "block";
+    btnPending.classList.add('active');
+  } else if (section === "approved") {
+    approvedSection.style.display = "block";
+    btnApproved.classList.add('active');
+  } else if (section === "commission") {
+    document.getElementById('commission-section').style.display = "block";
+    document.getElementById('btn-commission').classList.add('active');
+    fetchCommissions();
+ } else if (section === "withdrawals") {
+  document.getElementById('withdrawals-section').style.display = "block";
+  document.getElementById('btn-withdrawals').classList.add('active');
+  fetchWithdrawalRequests();
+  fetchApprovedWithdrawals(); // 👈 Add this line
+} else {
+    // default to order summary
+    orderSummarySection.style.display = "block";
   }
+}
+
+
+
+
+
+
+
+
+async function fetchWithdrawalRequests() {
+  const withdrawalList = document.getElementById('withdrawal-request-list');
+  withdrawalList.innerHTML = '<tr><td colspan="4">Loading...</td></tr>';
+
+  try {
+    // Assuming your withdrawal requests are stored in a collection 'withdrawals' 
+    // with a field 'status' where 'pending' means request is waiting for approval
+    const snapshot = await db.collection('withdrawals')
+      .where('status', '==', 'pending')
+      .orderBy('requestedAt', 'desc')
+      .get();
+
+    if (snapshot.empty) {
+      withdrawalList.innerHTML = '<tr><td colspan="4">No pending withdrawal requests.</td></tr>';
+      return;
+    }
+
+    let rowsHtml = '';
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      const requestedAt = data.requestedAt?.toDate().toLocaleString() || 'N/A';
+      rowsHtml += `
+        <tr>
+          <td>${data.userName || 'Unknown'}</td>
+          <td>₱${data.amount.toFixed(2)}</td>
+          <td>${requestedAt}</td>
+          <td>
+            <button class="approve-btn" onclick="approveWithdrawal('${doc.id}')">Approve</button>
+	    <button class="deny-btn" onclick="denyWithdrawal('${doc.id}')">Deny</button>
+
+          </td>
+        </tr>
+      `;
+    });
+
+    withdrawalList.innerHTML = rowsHtml;
+
+  } catch (error) {
+    withdrawalList.innerHTML = `<tr><td colspan="4">Error loading withdrawal requests: ${error.message}</td></tr>`;
+  }
+}
+
+
+
+async function fetchApprovedWithdrawals() {
+  const approvedList = document.getElementById('approved-withdrawal-list');
+  approvedList.innerHTML = '<tr><td colspan="3">Loading...</td></tr>';
+
+  try {
+    const snapshot = await db.collection('withdrawals')
+      .where('status', '==', 'approved')
+      .orderBy('approvedAt', 'desc')
+      .get();
+
+    if (snapshot.empty) {
+      approvedList.innerHTML = '<tr><td colspan="3">No approved withdrawals.</td></tr>';
+      return;
+    }
+
+    let rowsHtml = '';
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      const approvedAt = data.approvedAt?.toDate().toLocaleString() || 'N/A';
+      rowsHtml += `
+        <tr>
+          <td>${data.userName || 'Unknown'}</td>
+          <td>₱${data.amount.toFixed(2)}</td>
+          <td>${approvedAt}</td>
+        </tr>
+      `;
+    });
+
+    approvedList.innerHTML = rowsHtml;
+  } catch (error) {
+    approvedList.innerHTML = `<tr><td colspan="3">Error loading approved withdrawals: ${error.message}</td></tr>`;
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+async function approveWithdrawal(withdrawalId) {
+  if (!confirm("Approve this withdrawal request?")) return;
+
+  try {
+    const withdrawalRef = db.collection('withdrawals').doc(withdrawalId);
+    const withdrawalDoc = await withdrawalRef.get();
+
+    if (!withdrawalDoc.exists) {
+      alert("Withdrawal request not found.");
+      return;
+    }
+
+    const withdrawalData = withdrawalDoc.data();
+    const userId = withdrawalData.userId;
+    const requestedAmount = withdrawalData.amount;
+
+    const userRef = db.collection('users').doc(userId);
+    const userDoc = await userRef.get();
+
+    if (!userDoc.exists) {
+      alert("User not found.");
+      return;
+    }
+
+    const userData = userDoc.data();
+    const currentCommission = userData.commission || 0;
+
+    if (requestedAmount > currentCommission) {
+      alert(`User's commission (₱${currentCommission.toFixed(2)}) is less than the requested amount (₱${requestedAmount.toFixed(2)}). Approval denied.`);
+      return;
+    }
+
+    // Update withdrawal status to approved
+    await withdrawalRef.update({
+      status: 'approved',
+      approvedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    // Deduct withdrawal amount from user's commission
+    const newCommission = currentCommission - requestedAmount;
+
+    await userRef.update({
+      commission: newCommission,
+      hasPendingWithdrawal: false
+    });
+
+    alert(`Withdrawal approved. ₱${requestedAmount.toFixed(2)} deducted from commission.`);
+
+    await fetchWithdrawalRequests();
+    await fetchCommissions(); // ✅ <-- refresh the commission table
+  } catch (error) {
+    alert("Failed to approve withdrawal: " + error.message);
+    console.error("Error approving withdrawal:", error);
+  }
+}
+
+
+async function denyWithdrawal(withdrawalId) {
+  if (!confirm("Deny this withdrawal request?")) return;
+  
+  try {
+    await db.collection('withdrawals').doc(withdrawalId).update({ status: 'denied', deniedAt: firebase.firestore.FieldValue.serverTimestamp() });
+    alert("Withdrawal denied.");
+    fetchWithdrawalRequests();
+  } catch (error) {
+    alert("Failed to deny withdrawal: " + error.message);
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   async function fetchUsers() {
     const pendingSnapshot = await db.collection('users').where('approved', '==', false).get();
@@ -435,52 +1123,332 @@
   }
 
   async function fetchOrders() {
-    orderList.innerHTML = "<tr><td colspan='10'>Loading...</td></tr>";
-    const ordersSnapshot = await db.collection('orders').orderBy('createdAt', 'desc').limit(50).get();
+  orderList.innerHTML = "<tr><td colspan='11'>Loading...</td></tr>";
+  const ordersSnapshot = await db.collection('orders').orderBy('createdAt', 'desc').limit(50).get();
+
+  if (ordersSnapshot.empty) {
+    orderList.innerHTML = "<tr><td colspan='11'>No orders found.</td></tr>";
+    return;
+  }
+
+  orderList.innerHTML = "";
+  ordersSnapshot.forEach(doc => {
+    const order = doc.data();
+    const date = order.createdAt?.toDate().toLocaleString() || "N/A";
+    const referrals = (order.referralNames || []).join(', ');
+    const pricePerItem = order.totalPrice / order.quantity;
+    const rowId = doc.id;
+
+    const quantityPaid = order.quantityPaid || 0;
+    const summaryPaid = order.summaryPaid || 0;
+
+    const referralCode = order.referralCode || "N/A";
+
+    // Convert flavors array to string, or 'N/A' if missing or empty
+    const flavors = (order.flavors && order.flavors.length > 0) 
+      ? order.flavors.join(', ') 
+      : 'N/A';
+
+    orderList.innerHTML += 
+      `<tr>
+        <td>${order.orderNumber || '(No Order Number)'}</td>
+        <td>${order.username || 'Unknown'}</td>
+        <td>${referralCode}</td>
+        <td>${order.product || 'Unknown'}</td>
+        <td>${flavors}</td> <!-- Show flavors here -->
+        <td>${order.quantity}</td>
+        <td>₱${order.totalPrice.toFixed(2)}</td>
+        <td>${referrals}</td>
+        <td>${date}</td>
+        <td>
+          <input type="number" id="paidQty-${rowId}" min="0" max="${order.quantity}" value="${quantityPaid}" />
+          <button class="set-paid-btn" onclick="savePayment('${rowId}', ${pricePerItem})">Set</button>
+        </td>
+        <td><span id="summaryPaid-${rowId}">₱${summaryPaid.toFixed(2)}</span></td>
+      </tr>`;
+  });
+}
+
+
+
+
+function toggleOrderDetails(rowId) {
+  const detailsRow = document.getElementById(`details-${rowId}`);
+  if (detailsRow.style.display === "none") {
+    detailsRow.style.display = "table-row";
+  } else {
+    detailsRow.style.display = "none";
+  }
+}
+
+
+
+
+
+
+
+
+async function showUserOrderSummary(userId, userName) {
+  const orderSummaryTitle = document.getElementById("order-summary-title");
+  const selectedUserName = document.getElementById("selected-user-name");
+  const userOrderTable = document.getElementById("user-order-summary");
+  const userOrderList = document.getElementById("user-order-list");
+  const commissionDisplay = document.getElementById("commission-display");
+
+  selectedUserName.textContent = userName;
+  orderSummaryTitle.style.display = "block";
+  userOrderTable.style.display = "table";
+  userOrderList.innerHTML = "<tr><td colspan='7'>Loading...</td></tr>";
+  if (commissionDisplay) commissionDisplay.textContent = "Calculating commission...";
+
+  try {
+    console.log("Fetching orders for userId:", userId);
+
+    const ordersSnapshot = await db.collection('orders')
+      .where('userId', '==', userId)
+      .orderBy('createdAt', 'desc')
+      .get();
+
+    console.log("Orders fetched:", ordersSnapshot.size);
 
     if (ordersSnapshot.empty) {
-      orderList.innerHTML = "<tr><td colspan='10'>No orders found.</td></tr>";
+      userOrderList.innerHTML = `<tr><td colspan='7'>No orders found for this user.</td></tr>`;
+      if (commissionDisplay) commissionDisplay.textContent = "No commissions earned.";
       return;
     }
 
-    orderList.innerHTML = "";
+    let rowsHtml = "";
+    let totalCommission = 0;
+
     ordersSnapshot.forEach(doc => {
       const order = doc.data();
-      const date = order.createdAt?.toDate().toLocaleString() || "N/A";
-      const referrals = (order.referralNames || []).join(', ');
-      const pricePerItem = order.totalPrice / order.quantity;
-      const rowId = doc.id;
+      const timestamp = order.lastUpdated || order.updatedAt || order.createdAt || null;
+      const lastUpdated = timestamp ? timestamp.toDate().toLocaleString() : "N/A";
 
-      const quantityPaid = order.quantityPaid || 0;
-      const summaryPaid = order.summaryPaid || 0;
+      const quantity = Number(order.quantity) || 0;
+      const quantityPaid = Number(order.quantityPaid) || 0;
+      const totalPrice = Number(order.totalPrice) || 0;
 
-      const referralCode = order.referralCode || "N/A";
+      let commission = 0;
+      if (quantityPaid === quantity) {
+        if (quantityPaid === 5) {
+          commission = totalPrice * 0.09;
+        } else if (quantityPaid === 10) {
+          commission = totalPrice * 0.10;
+        }
+      }
 
-      orderList.innerHTML += 
-        `<tr>
+      totalCommission += commission;
+
+      rowsHtml += `
+        <tr>
           <td>${order.orderNumber || '(No Order Number)'}</td>
-          <td>${order.username || 'Unknown'}</td>
-          <td>${referralCode}</td>
           <td>${order.product || 'Unknown'}</td>
-          <td>${order.quantity}</td>
-          <td>₱${order.totalPrice.toFixed(2)}</td>
-          <td>${referrals}</td>
-          <td>${date}</td>
-          <td>
-            <input type="number" id="paidQty-${rowId}" min="0" max="${order.quantity}" value="${quantityPaid}" />
-            <button class="set-paid-btn" onclick="savePayment('${rowId}', ${pricePerItem})">Set</button>
-          </td>
-          <td><span id="summaryPaid-${rowId}">₱${summaryPaid.toFixed(2)}</span></td>
+          <td>${quantity}</td>
+          <td>${quantityPaid}</td>
+          <td>${lastUpdated}</td>
+          <td>₱${totalPrice.toFixed(2)}</td>
+          <td>₱${commission.toFixed(2)}</td>
         </tr>`;
     });
-  }
 
-  async function approveUser(userId) {
-    if (confirm("Approve this user?")) {
-      await db.collection('users').doc(userId).update({ approved: true });
-      fetchUsers();
-    }
+    userOrderList.innerHTML = rowsHtml;
+    if (commissionDisplay) commissionDisplay.textContent = `Total Commission: ₱${totalCommission.toFixed(2)}`;
+
+  } catch (error) {
+    console.error("Error fetching user orders:", error);
+    userOrderList.innerHTML = `<tr><td colspan='7'>Error loading orders: ${error.message}</td></tr>`;
+    if (commissionDisplay) commissionDisplay.textContent = "Error calculating commission.";
   }
+}
+
+
+
+
+
+
+async function displayUserCommission(userId) {
+  const commissionData = await calculateUserCommission(userId);
+  const commissionEl = document.getElementById('commission-display');
+  if (commissionEl) {
+    commissionEl.textContent = `Total Commission: ₱${commissionData.commission.toFixed(2)}`;
+  } else {
+    console.warn('Element with id "commission-display" not found');
+  }
+}
+
+
+
+
+async function calculateUserCommission(userId) {
+  const ordersSnapshot = await db.collection('orders')
+    .where('userId', '==', userId)
+    .get();
+
+  let totalCommission = 0;
+  let qualifyingOrderCount = 0;
+  let totalPriceOfQualifiedOrders = 0;
+
+  // Calculate commission from qualified orders
+  ordersSnapshot.forEach(doc => {
+    const order = doc.data();
+    const quantity = Number(order.quantity) || 0;
+    const quantityPaid = Number(order.quantityPaid) || 0;
+    const totalPrice = Number(order.totalPrice) || 0;
+
+    if (quantityPaid === quantity) {
+      let commissionRate = 0;
+
+      if (quantityPaid === 5) {
+        commissionRate = 0.09;
+      } else if (quantityPaid === 10) {
+        commissionRate = 0.10;
+      }
+
+      if (commissionRate > 0) {
+        const orderCommission = totalPrice * commissionRate;
+        totalCommission += orderCommission;
+        qualifyingOrderCount++;
+        totalPriceOfQualifiedOrders += totalPrice;
+      }
+    }
+  });
+
+  // 🧮 Deduct approved withdrawals
+  const withdrawalsSnapshot = await db.collection('withdrawals')
+    .where('userId', '==', userId)
+    .where('status', '==', 'approved')
+    .get();
+
+  let totalWithdrawn = 0;
+  withdrawalsSnapshot.forEach(doc => {
+    totalWithdrawn += doc.data().amount || 0;
+  });
+
+  totalCommission -= totalWithdrawn;
+  if (totalCommission < 0) totalCommission = 0; // Just in case
+
+  // 💾 Optionally save the final commission to Firestore
+  await db.collection('users').doc(userId).update({
+    commission: totalCommission
+  });
+
+  // 🔁 Return values if needed for UI
+  return {
+    commission: totalCommission,
+    fullyPaidOrdersCount: qualifyingOrderCount,
+    totalPriceOfFullyPaidOrders: totalPriceOfQualifiedOrders
+  };
+}
+
+
+async function fetchCommissions() {
+  const commissionList = document.getElementById('commission-list');
+  commissionList.innerHTML = '<tr><td colspan="3">Loading...</td></tr>';
+
+  try {
+    const usersSnapshot = await db.collection('users').get();
+    if (usersSnapshot.empty) {
+      commissionList.innerHTML = '<tr><td colspan="3">No users found.</td></tr>';
+      return;
+    }
+
+    let rowsHtml = '';
+    for (const userDoc of usersSnapshot.docs) {
+      const user = userDoc.data();
+      const userId = userDoc.id;
+
+      // Calculate commission for the user
+      const commissionData = await calculateUserCommission(userId);
+      const commissionAmount = commissionData.commission || 0;
+
+      // ✅ Save the commission to the user's Firestore document
+      await db.collection('users').doc(userId).update({
+        commission: commissionAmount
+      });
+
+      rowsHtml += `
+        <tr onclick="showUserOrderSummary('${userId}', '${user.name || 'No name'}')" style="cursor:pointer;">
+          <td>${user.name || '(No name)'}</td>
+          <td>${user.email || 'No email'}</td>
+          <td>₱${commissionAmount.toFixed(2)}</td>
+        </tr>
+      `;
+    }
+
+    commissionList.innerHTML = rowsHtml || '<tr><td colspan="3">No commission data available.</td></tr>';
+  } catch (error) {
+    commissionList.innerHTML = `<tr><td colspan="3">Error loading commissions: ${error.message}</td></tr>`;
+    console.error("Error fetching commissions:", error);
+  }
+}
+
+
+
+
+
+
+
+
+
+async function approveWithdrawal(withdrawalId) {
+  if (!confirm("Approve this withdrawal request?")) return;
+
+  try {
+    const withdrawalRef = db.collection('withdrawals').doc(withdrawalId);
+    const withdrawalDoc = await withdrawalRef.get();
+
+    if (!withdrawalDoc.exists) {
+      alert("Withdrawal request not found.");
+      return;
+    }
+
+    const withdrawalData = withdrawalDoc.data();
+    const userId = withdrawalData.userId;
+    const requestedAmount = withdrawalData.amount;
+
+    const userRef = db.collection('users').doc(userId);
+    const userDoc = await userRef.get();
+
+    if (!userDoc.exists) {
+      alert("User not found.");
+      return;
+    }
+
+    const userData = userDoc.data();
+    const currentCommission = userData.commission || 0;
+
+    if (requestedAmount > currentCommission) {
+      alert(`User's commission (₱${currentCommission.toFixed(2)}) is less than the requested amount (₱${requestedAmount.toFixed(2)}). Approval denied.`);
+      return;
+    }
+
+    // Update withdrawal status to approved
+    await withdrawalRef.update({
+      status: 'approved',
+      approvedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    // Deduct withdrawal amount from user's commission
+    const newCommission = currentCommission - requestedAmount;
+
+    await userRef.update({
+      commission: newCommission,
+      hasPendingWithdrawal: false
+    });
+
+    alert(`Withdrawal approved. ₱${requestedAmount.toFixed(2)} deducted from commission.`);
+
+    await fetchWithdrawalRequests();
+    await fetchCommissions(); // ✅ <-- refresh the commission table
+  } catch (error) {
+    alert("Failed to approve withdrawal: " + error.message);
+    console.error("Error approving withdrawal:", error);
+  }
+}
+
+
+
 
   async function denyUser(userId) {
     if (confirm("Remove this user?")) {
@@ -489,46 +1457,51 @@
     }
   }
 
-  async function savePayment(rowId, unitPrice) {
-    const qtyInput = document.getElementById(`paidQty-${rowId}`);
-    let qty = parseInt(qtyInput.value);
-    const maxQty = parseInt(qtyInput.max);
+ async function savePayment(rowId, unitPrice) {
+  const qtyInput = document.getElementById(`paidQty-${rowId}`);
+  let qty = parseInt(qtyInput.value, 10);
+  const maxQty = parseInt(qtyInput.max, 10);
 
-    if (isNaN(qty) || qty < 0) {
-      alert("Please enter a valid quantity.");
-      qtyInput.value = 0;
-      document.getElementById(`summaryPaid-${rowId}`).textContent = "₱0.00";
-      return;
-    }
-
-    if (qty > maxQty) {
-      alert(`Quantity cannot exceed the ordered amount (${maxQty}).`);
-      qty = maxQty;
-      qtyInput.value = maxQty;
-    }
-
-    const totalPaid = qty * unitPrice;
-    document.getElementById(`summaryPaid-${rowId}`).textContent = `₱${totalPaid.toFixed(2)}`;
-
-    try {
-      await db.collection('orders').doc(rowId).update({
-        quantityPaid: qty,
-        summaryPaid: totalPaid,
-      });
-
-      await db.collection('orders').doc(rowId).collection('adminOrders').doc('payment').set({
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-        quantityPaid: qty,
-        summaryPaid: totalPaid,
-        updatedBy: firebase.auth().currentUser?.uid || 'unknown',
-      });
-
-      alert("Payment info updated and saved to Admin Orders.");
-      fetchOrders();
-    } catch (error) {
-      alert("Failed to update payment info: " + error.message);
-    }
+  if (isNaN(qty) || qty < 0) {
+    alert("Please enter a valid quantity.");
+    qtyInput.value = 0;
+    document.getElementById(`summaryPaid-${rowId}`).textContent = "₱0.00";
+    return;
   }
+
+  if (qty > maxQty) {
+    alert(`Quantity cannot exceed the ordered amount (${maxQty}).`);
+    qty = maxQty;
+    qtyInput.value = maxQty;
+  }
+
+  const totalPaid = qty * unitPrice;
+  document.getElementById(`summaryPaid-${rowId}`).textContent = `₱${totalPaid.toFixed(2)}`;
+
+  try {
+    // Update main order document with lastUpdated timestamp
+    await db.collection('orders').doc(rowId).update({
+      quantityPaid: qty,
+      summaryPaid: totalPaid,
+      lastUpdated: firebase.firestore.FieldValue.serverTimestamp(),
+    });
+
+    // Update adminOrders subcollection payment document
+    await db.collection('orders').doc(rowId).collection('adminOrders').doc('payment').set({
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      quantityPaid: qty,
+      summaryPaid: totalPaid,
+      updatedBy: firebase.auth().currentUser?.uid || 'unknown',
+    });
+
+    alert("Payment info updated and saved to Admin Orders.");
+    fetchOrders();
+  } catch (error) {
+    alert("Failed to update payment info: " + error.message);
+  }
+}
+
+
 
   firebase.auth().onAuthStateChanged(async user => {
     if (!user) {
@@ -550,6 +1523,7 @@
     toggleSection(''); // show order summary by default
     fetchUsers();
     fetchOrders();
+    fetchFlavors();  // <-- added here
   });
 
   // *** LOGOUT BUTTON HANDLER ADDED HERE ***
