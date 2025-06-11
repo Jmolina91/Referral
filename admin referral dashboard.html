@@ -1385,6 +1385,19 @@ async function fetchCommissions() {
 
 
 
+  async function approveUser(userId) {
+    if (confirm("Approve this user?")) {
+      await db.collection('users').doc(userId).update({ approved: true });
+      fetchUsers();
+    }
+  }
+
+  async function denyUser(userId) {
+    if (confirm("Remove this user?")) {
+      await db.collection('users').doc(userId).delete();
+      fetchUsers();
+    }
+  }
 
 
 
