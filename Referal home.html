@@ -220,6 +220,44 @@
       background-color: #b71c1c;
       box-shadow: 0 0 14px #b71c1cbb;
     }
+
+.withdrawal-note {
+  margin-top: 25px;
+  font-size: 1rem;
+  font-style: italic;
+  color: #d1c4fdcc;
+  text-shadow:
+    0 0 5px #b39ddb,
+    0 0 15px #9575cd88;
+  background: rgba(108, 92, 231, 0.15);
+  padding: 12px 15px;
+  border-radius: 12px;
+  user-select: none;
+  box-shadow: 0 0 8px #9575cd88;
+}
+
+
+.card p {
+  margin: 6px 0;
+  font-size: 16px;
+}
+
+#user-info.card {
+  background-color: #fff;
+  padding: 16px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  width: 280px;
+  margin-top: 10px;
+  font-family: 'Segoe UI', sans-serif;
+}
+#user-info h3 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+
+
   </style>
 </head>
 <body>
@@ -227,17 +265,77 @@
 <header>
   <h1>Referral Dashboard</h1>
   <nav>
-    <a href="#">Home</a>
+    <a href="#" id="home-link">Home</a>
     <a href="#">My Orders</a>
-    <a href="#">Account</a>
+     <a href="#" id="account-link">Account</a>
     <a href="#" id="logout-btn">Logout</a>
   </nav>
 </header>
+<div id="user-info" class="card" style="display: none; position: absolute; right: 20px; top: 70px; z-index: 1000; background: white; border: 1px solid #ccc; border-radius: 8px; padding: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); min-width: 250px;">
+  <p>Loading user info...</p>
+</div>
+
+
+
+
+
+
+
+
+
+
 
 <main>
-  <div id="user-info" class="card">
-    <p>Loading user info...</p>
+
+<p class="withdrawal-note">
+  ⚠️ Withdrawal of Commission is only available on <strong>every 15th and 30th</strong> of the month.
+</p>
+
+
+<!-- Withdraw Section -->
+<div id="withdraw-section" class="card" style="padding: 20px; border: 1px solid #ccc; border-radius: 8px;">
+  <h3>Withdraw Commission</h3>
+  <p>Total Commission Available: <strong id="commission-amount">₱0.00</strong></p>
+  <button id="withdraw-btn" disabled style="margin-bottom: 10px;">Request Withdrawal</button>
+  <p id="withdraw-message" style="margin: 10px 0;"></p>
+  
+  <!-- View Withdrawal History Button -->
+  <button id="view-withdrawal-history-btn">View Withdrawal History</button>
+</div>
+
+<!-- Withdrawal History Modal -->
+<div id="withdrawalHistoryModal" style="
+  display: none;
+  position: fixed;
+  top: 10%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  max-width: 600px;
+  background: #fff;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  z-index: 1000;
+">
+  <div id="withdrawalHistoryContent">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <h2 style="margin: 0;">Withdrawal History</h2>
+      <button id="closeWithdrawalModalBtn" style="
+        background: none;
+        border: none;
+        font-size: 20px;
+        cursor: pointer;
+      ">&times;</button>
+    </div>
+    <hr style="margin: 10px 0;">
+    <div id="withdrawalHistoryDetails" style="max-height: 300px; overflow-y: auto;">
+      <!-- Filled dynamically -->
+    </div>
   </div>
+</div>
+
+
 
   <div id="referral-section" class="card" style="display:none;">
     <h2>Referral Configuration</h2>
@@ -294,23 +392,26 @@
   const closeModalBtn = document.getElementById("closeModalBtn");
   const viewOrderHistoryBtn = document.getElementById("view-order-history-btn");
 
+  const commissionAmountElem = document.getElementById("commission-amount");
+  const withdrawBtn = document.getElementById("withdraw-btn");
+  const withdrawMsg = document.getElementById("withdraw-message");
+
+  const viewWithdrawalHistoryBtn = document.getElementById("view-withdrawal-history-btn");
+  const withdrawalHistoryModal = document.getElementById("withdrawalHistoryModal");
+  const withdrawalHistoryDetails = document.getElementById("withdrawalHistoryDetails");
+  const closeWithdrawalModalBtn = document.getElementById("closeWithdrawalModalBtn");
+  const withdrawalHistoryContent = document.getElementById("withdrawalHistoryDetails");
+  const deniedList = document.getElementById("denied-withdrawal-list");
+
+
+
   let currentReferralCount = 0;
   let currentReferralCode = null;
   let currentUserName = "Unknown User"; // Store the username globally
 
-  auth.onAuthStateChanged(async (user) => {
-  if (user) {
-    logoutBtn.style.display = "inline-block";
-    referralSection.style.display = "block";
-
-    try {
-      const userRef = db.collection("users").doc(user.uid);
-      const userDoc = await userRef.get();
-      const userData = userDoc.exists ? userDoc.data() : {};
 
 
 
-      // Dynamically calculate referral count from current orders
 auth.onAuthStateChanged(async (user) => {
   if (user) {
     logoutBtn.style.display = "inline-block";
@@ -319,12 +420,20 @@ auth.onAuthStateChanged(async (user) => {
     try {
       const userRef = db.collection("users").doc(user.uid);
       const userDoc = await userRef.get();
-      const userData = userDoc.exists ? userDoc.data() : {};
 
+      if (!userDoc.exists) {
+        // 🚫 Not registered in Firestore — deny access
+        alert("Access denied. You are not a registered user.");
+        await auth.signOut();
+        window.location.href = "login.html"; // Replace with your actual login page
+        return;
+      }
+
+      const userData = userDoc.data();
       currentReferralCode = userData.referralCode || null;
       currentUserName = userData.name || user.displayName || "Unknown User";
 
-      // 🔽 Add this block for dynamic referral count
+      // Dynamically calculate referral count from current orders
       let liveReferralCount = 0;
       try {
         const currentOrdersSnapshot = await db.collection("orders")
@@ -339,120 +448,316 @@ auth.onAuthStateChanged(async (user) => {
         currentReferralCount = liveReferralCount;
       } catch (error) {
         console.error("Error calculating referral count:", error);
-        currentReferralCount = userData.referralCount || 0; // fallback
+        currentReferralCount = userData.referralCount || 0;
       }
 
+      // Calculate total commission from user's orders
+      let totalCommission = 0;
+      try {
+        const ordersQuery = await db.collection("orders")
+          .where("userId", "==", user.uid)
+          .get();
+
+        for (const orderDoc of ordersQuery.docs) {
+          const orderData = orderDoc.data();
+
+          const adminOrdersSnapshot = await db.collection("orders")
+            .doc(orderDoc.id)
+            .collection("adminOrders")
+            .get();
+
+          let orderQuantityPaid = 0;
+          let orderSummaryPaid = 0;
+
+          adminOrdersSnapshot.forEach(adminOrderDoc => {
+            const adminData = adminOrderDoc.data();
+            orderQuantityPaid += adminData.quantityPaid || 0;
+            orderSummaryPaid += adminData.summaryPaid || 0;
+          });
+
+          const cappedQuantityPaid = Math.min(orderQuantityPaid, orderData.quantity);
+
+          if (cappedQuantityPaid === orderData.quantity) {
+            if (cappedQuantityPaid === 10) {
+              totalCommission += orderSummaryPaid * 0.10;
+            } else if (cappedQuantityPaid === 5) {
+              totalCommission += orderSummaryPaid * 0.09;
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Error calculating commission:", error);
+      }
+
+      // Update commission from latest withdrawal
+      const commission = userData.commission || 0;
+      commissionAmountElem.textContent = `₱${commission.toFixed(2)}`;
+
+      if (commission > 0) {
+        withdrawBtn.disabled = false;
+        withdrawMsg.textContent = "";
+      } else {
+        withdrawBtn.disabled = true;
+        withdrawMsg.textContent = "No commission available to withdraw.";
+        withdrawMsg.style.color = "gray";
+      }
+
+      const withdrawalSnapshot = await db.collection("withdrawals")
+        .where("userId", "==", user.uid)
+        .orderBy("requestedAt", "desc")
+        .limit(1)
+        .get();
+
+      // Auto-clear hasPendingWithdrawal if last withdrawal was denied
+      if (!withdrawalSnapshot.empty) {
+        const last = withdrawalSnapshot.docs[0].data();
+        if (last.status === "denied") {
+          await userRef.update({ hasPendingWithdrawal: false });
+        }
+      }
+
+      // Ensure referral code exists
       if (!currentReferralCode) {
         currentReferralCode = await generateUniqueReferralCode();
         await userRef.update({ referralCode: currentReferralCode });
       }
 
-      // Now safe to render UI
+      // Render UI
       userInfoDiv.innerHTML = `
+        <div style="text-align: center; margin-bottom: 10px;">
+          <img src="https://cdn-icons-png.flaticon.com/512/747/747376.png" alt="Account Icon" style="width: 60px; height: 60px; border-radius: 50%;">
+          <h3 style="margin-top: 5px;">My Account</h3>
+        </div>
         <p><strong>Name:</strong> ${currentUserName}</p>
         <p><strong>Email:</strong> ${user.email}</p>
         <p><strong>Referral Code:</strong> ${currentReferralCode}</p>
         <p><strong>Referral Count:</strong> <span id="referral-count-display">${currentReferralCount}</span></p>
       `;
+
     } catch (error) {
       userInfoDiv.innerHTML = "<p>Failed to load user data.</p>";
       console.error("Error loading user data:", error);
     }
-  }
-});
 
-
-
-      currentReferralCode = userData.referralCode || null;
-
-      currentUserName = userData.name || user.displayName || "Unknown User";
-
-      if (!currentReferralCode) {
-        currentReferralCode = await generateUniqueReferralCode();
-        await userRef.update({ referralCode: currentReferralCode });
-      }
-
-      // === COMMISSION CALCULATION LOGIC ===
-      let totalCommission = 0;
-      const userOrdersSnapshot = await db.collection("orders")
-        .where("userId", "==", user.uid)
-        .get();
-
-      // Calculate commission for the user's orders
-      for (const orderDoc of userOrdersSnapshot.docs) {
-        const orderData = orderDoc.data();
-
-      const adminOrdersSnapshot = await db.collection("orders")
-  .doc(orderDoc.id)
-  .collection("adminOrders")
-  .orderBy("updatedAt", "desc")
-  .limit(1)
-  .get();
-
-let orderQuantityPaid = 0;
-let orderSummaryPaid = 0;
-
-if (!adminOrdersSnapshot.empty) {
-  const latestAdminData = adminOrdersSnapshot.docs[0].data();
-  orderQuantityPaid = latestAdminData.quantityPaid || 0;
-  orderSummaryPaid = latestAdminData.summaryPaid || 0;
-}
-
-        // Calculate commission for this order
-        if (orderData.quantity === orderQuantityPaid) {
-          if (orderQuantityPaid === 10) {
-            totalCommission += orderSummaryPaid * 0.13;
-          } else if (orderQuantityPaid === 5) {
-            totalCommission += orderSummaryPaid * 0.10;
-          }
-        }
-      }
-
-      // Update user info with the computed commission
-      userInfoDiv.innerHTML = `
-        <p><strong>Name:</strong> ${currentUserName}</p>
-        <p><strong>Email:</strong> ${user.email}</p>
-        <p><strong>Referral Code:</strong> ${currentReferralCode}</p>
-        <p><strong>Referral Count:</strong> <span id="referral-count-display">${currentReferralCount}</span></p>
-        <p><strong>Earned Commission:</strong> ₱${totalCommission.toFixed(2)}</p>
-      `;
-    } catch (error) {
-      userInfoDiv.innerHTML = "<p>Failed to load user data.</p>";
-      console.error("Error fetching user data:", error);
-    }
   } else {
-    userInfoDiv.innerHTML = "<p>You are not logged in. Please <a href='Referral Login.html'>login or sign up</a>.</p>";
     logoutBtn.style.display = "none";
     referralSection.style.display = "none";
+    userInfoDiv.innerHTML = "<p>Please log in.</p>";
   }
 });
 
 
-  logoutBtn.addEventListener("click", () => {
-    auth.signOut().then(() => location.reload());
-  });
 
-  function generateReferralFields() {
-    const count = parseInt(document.getElementById("referral-count").value);
-    const container = document.getElementById("referral-fields");
-    const totalDisplay = document.getElementById("total-price");
-    const pricePerReferral = 150;
 
-    container.innerHTML = "";
+async function updateWithdrawalUI() {
+  const user = auth.currentUser;
+  if (!user) {
+    commissionAmountElem.textContent = "₱0.00";
+    withdrawBtn.disabled = true;
+    withdrawMsg.textContent = "Please log in to view commission and withdraw.";
+    withdrawMsg.style.color = "gray";
+    return;
+  }
 
-    for (let i = 1; i <= count; i++) {
-      const row = document.createElement("div");
-      row.className = "referral-row";
-      row.innerHTML = `
-        <input type="text" placeholder="Referral Name ${i}" name="referral${i}" />
-        <input type="text" value="Mushroom Chicharon" readonly />
-        <input type="text" value="₱150" readonly />
-      `;
-      container.appendChild(row);
+  try {
+    const userRef = db.collection("users").doc(user.uid);
+    const userDoc = await userRef.get();
+    const userData = userDoc.exists ? userDoc.data() : {};
+    const commission = userData.commission || 0;
+
+    commissionAmountElem.textContent = `₱${commission.toFixed(2)}`;
+
+    if (commission > 0) {
+      withdrawBtn.disabled = false;
+      withdrawMsg.textContent = "";
+    } else {
+      withdrawBtn.disabled = true;
+      withdrawMsg.textContent = "You have no commission available to withdraw.";
+      withdrawMsg.style.color = "gray";
     }
 
-    totalDisplay.textContent = `₱${count * pricePerReferral}`;
+  } catch (error) {
+    console.error("Error updating withdrawal UI:", error);
+    commissionAmountElem.textContent = "₱0.00";
+    withdrawBtn.disabled = true;
+    withdrawMsg.textContent = "Failed to load commission info.";
+    withdrawMsg.style.color = "red";
   }
+}
+
+auth.onAuthStateChanged(async (user) => {
+  if (user) {
+    currentUserName = user.displayName || "User"; 
+  }
+  updateWithdrawalUI();
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+withdrawBtn.addEventListener("click", async () => {
+  const user = auth.currentUser;
+  if (!user) {
+    alert("You must be logged in to request withdrawal.");
+    return;
+  }
+
+  withdrawBtn.disabled = true;
+
+  const userRef = db.collection("users").doc(user.uid);
+  const commissionAmountElem = document.getElementById("commission-amount");
+
+  try {
+    const userDoc = await userRef.get();
+    const userData = userDoc.data();
+    const hasPending = userData.hasPendingWithdrawal || false;
+    const commission = userData.commission || 0;
+
+    if (hasPending) {
+      alert("You already have a pending withdrawal request.");
+      withdrawBtn.disabled = false;
+      return;
+    }
+
+    if (commission <= 0) {
+      alert("No commission available to withdraw.");
+      withdrawBtn.disabled = false;
+      return;
+    }
+
+    const withdrawalRequest = {
+      userId: user.uid,
+      userName: userData.name || "Unknown",
+      email: user.email,
+      amount: commission,
+      requestedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      status: "pending",
+    };
+
+    // Create the withdrawal record
+    await db.collection("withdrawals").add(withdrawalRequest);
+
+    // Reset commission and flag the user
+    // Only flag that a request is pending
+await userRef.update({
+  hasPendingWithdrawal: true
+});
+
+    // Update UI
+    commissionAmountElem.textContent = "₱0.00";
+    withdrawMsg.style.color = "green";
+    withdrawMsg.textContent = "Your withdrawal request is pending approval.";
+    alert("Withdrawal request submitted successfully.");
+
+  } catch (error) {
+    console.error("Error submitting withdrawal request:", error);
+    alert("Failed to submit withdrawal request. Please try again.");
+    withdrawBtn.disabled = false;
+    withdrawMsg.style.color = "red";
+    withdrawMsg.textContent = "Failed to submit withdrawal request. Please try again.";
+  }
+});
+
+
+
+
+
+
+
+function loadDeniedWithdrawals() {
+  db.collection("withdrawalRequests")
+    .where("status", "==", "denied")
+    .orderBy("timestamp", "desc")
+    .get()
+    .then(snapshot => {
+      deniedList.innerHTML = "";
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${data.userName || "Unknown"}</td>
+          <td>₱${data.amount.toFixed(2)}</td>
+          <td>${new Date(data.timestamp.toDate()).toLocaleString()}</td>
+          <td>${data.reason || "N/A"}</td>
+        `;
+        deniedList.appendChild(row);
+      });
+    });
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function generateReferralFields() {
+  const count = parseInt(document.getElementById("referral-count").value);
+  const container = document.getElementById("referral-fields");
+  const totalDisplay = document.getElementById("total-price");
+  const pricePerReferral = 150;
+
+  container.innerHTML = "";
+
+  for (let i = 1; i <= count; i++) {
+    const row = document.createElement("div");
+    row.className = "referral-row";
+    row.style.display = "flex";
+    row.style.gap = "10px";
+    row.style.marginBottom = "8px";
+
+    row.innerHTML = `
+      <input type="text" placeholder="Referral Name ${i}" name="referral${i}" style="flex: 1;" />
+      <input type="text" value="Mushroom Chicharon" readonly style="flex: 1;" />
+      <select name="flavor${i}" class="flavor-select" style="flex: 1;">
+        <option value="Cheese">Cheese</option>
+        <option value="BBQ">BBQ</option>
+        <option value="Garlic">Garlic</option>
+        <option value="Salted Egg">Salted Egg</option>
+      </select>
+      <input type="text" value="₱150" readonly style="flex: 0.8;" />
+    `;
+
+    container.appendChild(row);
+  }
+
+  totalDisplay.textContent = `₱${count * pricePerReferral}`;
+}
+
 
   // Generate fields on load
   window.onload = generateReferralFields;
@@ -472,6 +777,8 @@ if (!adminOrdersSnapshot.empty) {
       return newCode.toString();
     });
   }
+
+
 
   // Generate unique order number formatted as 5-digit string
   async function generateUniqueOrderNumber() {
@@ -494,12 +801,17 @@ if (!adminOrdersSnapshot.empty) {
     if (!user) return alert("You must be logged in to submit an order.");
 
     const referralInputs = document.querySelectorAll("#referral-fields input[type='text']:not([readonly])");
+    const flavorSelects = document.querySelectorAll("#referral-fields select");
     const referrals = Array.from(referralInputs)
       .map(input => input.value.trim())
       .filter(name => name.length > 0);
 
-    if (referrals.length === 0) {
-      alert("Please enter at least one referral name.");
+    const flavors = Array.from(flavorSelects)
+      .map(select => select.value)
+      .filter(flavor => flavor.length > 0);
+
+    if (referrals.length === 0 || flavors.length === 0) {
+      alert("Please enter at least one referral name and select a flavor.");
       return;
     }
 
@@ -524,9 +836,10 @@ if (!adminOrdersSnapshot.empty) {
       const username = currentUserName;
 
       const order = {
-        userId: user.uid,     // <-- Added userId for permissions and querying
-        username,             // existing username field
+        userId: user.uid,
+        username,
         referralNames: referrals,
+        flavors,
         product: "Mushroom Chicharon",
         pricePerItem,
         quantity,
@@ -545,6 +858,7 @@ if (!adminOrdersSnapshot.empty) {
       document.getElementById("referral-count-display").textContent = updatedCount;
 
       referralInputs.forEach(input => input.value = "");
+      flavorSelects.forEach(select => select.selectedIndex = 0);
 
       alert(`Order submitted successfully! Your referral code is ${referralCode} and your order number is ${orderNumber}.`);
 
@@ -554,7 +868,83 @@ if (!adminOrdersSnapshot.empty) {
     }
   });
 
-  viewOrderHistoryBtn.addEventListener("click", async () => {
+
+
+
+
+
+
+
+closeWithdrawalModalBtn.addEventListener("click", () => {
+  withdrawalHistoryModal.style.display = "none";
+});
+
+
+
+viewWithdrawalHistoryBtn.addEventListener("click", async () => {
+  const user = auth.currentUser;
+  if (!user) {
+    alert("You must be logged in to view withdrawal history.");
+    return;
+  }
+  
+  console.log("Current user ID:", user.uid); // Step 1 check
+
+  withdrawalHistoryContent.innerHTML = "Loading withdrawal history...";
+  withdrawalHistoryModal.style.display = "block";
+
+  try {
+    const snapshot = await db.collection("withdrawals")
+      .where("userId", "==", user.uid)
+      .orderBy("requestedAt", "desc") // requires index
+      .get();
+
+    if (snapshot.empty) {
+      withdrawalHistoryContent.innerHTML = "<p>No withdrawal history found.</p>";
+      return;
+    }
+
+    let html = "<ul style='list-style:none; padding:0;'>";
+        snapshot.forEach(doc => {
+      const data = doc.data();
+      const amount = data.amount || 0;
+      const status = data.status || "Pending";
+      const requestedAt = data.requestedAt ? data.requestedAt.toDate().toLocaleString() : "Unknown date";
+      const reason = data.reason || null;
+
+      html += `
+        <li style="border-bottom:1px solid #ccc; margin-bottom:10px; padding-bottom:10px;">
+          <strong>Amount:</strong> ₱${amount.toFixed(2)}<br>
+          <strong>Status:</strong> ${status}<br>
+          <strong>Requested At:</strong> ${requestedAt}<br>
+          ${status === "denied" && reason ? `<strong>Reason:</strong> ${reason}<br>` : ""}
+        </li>`;
+    });
+
+    html += "</ul>";
+
+    withdrawalHistoryContent.innerHTML = html;
+
+  } catch (error) {
+    console.error("Error loading withdrawal history:", error);
+    withdrawalHistoryContent.innerHTML = `<p style="color:red;">Failed to load withdrawal history. Please try again later.</p>`;
+  }
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+viewOrderHistoryBtn.addEventListener("click", async () => {
   const user = auth.currentUser;
   if (!user) return alert("You must be logged in to view order history.");
 
@@ -599,9 +989,9 @@ if (!adminOrdersSnapshot.empty) {
       let commissionForThisOrder = 0;
       if (orderData.quantity === cappedQuantityPaid) {
         if (cappedQuantityPaid === 10) {
-          commissionForThisOrder = orderSummaryPaid * 0.13;
+          commissionForThisOrder = orderSummaryPaid * 0.10; // 10% for 10 paid referrals
         } else if (cappedQuantityPaid === 5) {
-          commissionForThisOrder = orderSummaryPaid * 0.10;
+          commissionForThisOrder = orderSummaryPaid * 0.09; // 9% for 5 paid referrals
         }
         totalCommission += commissionForThisOrder;
       }
@@ -610,8 +1000,8 @@ if (!adminOrdersSnapshot.empty) {
         ? '<span style="color: green; font-weight: bold;">Complete</span>'
         : '<span style="color: orange; font-weight: bold;">Pending</span>';
 
-      html += 
-        `<div style="border-bottom:1px solid #ddd; padding:10px 0;">
+      html += `
+        <div style="border-bottom:1px solid #ddd; padding:10px 0;">
           <p><strong>Order Number:</strong> ${orderData.orderNumber || "N/A"}</p>
           <p><strong>Order Date:</strong> ${orderData.createdAt?.toDate().toLocaleString() || "N/A"}</p>
           <p><strong>Product:</strong> ${orderData.product}</p>
@@ -619,6 +1009,17 @@ if (!adminOrdersSnapshot.empty) {
           <p><strong>Quantity Paid:</strong> ${cappedQuantityPaid}</p>
           <p><strong>Summary Paid:</strong> ₱${orderSummaryPaid.toFixed(2)}</p>
           <p><strong>Status:</strong> ${statusTag}</p>`;
+
+      // Show referral names and corresponding flavors if available
+      if (Array.isArray(orderData.referralNames) && Array.isArray(orderData.flavors)) {
+        html += `<p><strong>Referrals & Flavors:</strong></p><ul>`;
+        for (let i = 0; i < orderData.referralNames.length; i++) {
+          const name = orderData.referralNames[i];
+          const flavor = orderData.flavors[i] || "N/A";
+          html += `<li>${name} - <em>${flavor}</em></li>`;
+        }
+        html += `</ul>`;
+      }
 
       if (commissionForThisOrder > 0) {
         html += `<p><strong>Commission from this order:</strong> ₱${commissionForThisOrder.toFixed(2)}</p>`;
@@ -630,7 +1031,7 @@ if (!adminOrdersSnapshot.empty) {
     if (totalCommission > 0) {
       html += `<p style="color: green; font-weight: bold;">Total Earned Commission: ₱${totalCommission.toFixed(2)}</p>`;
     } else {
-      html += `<p style="color: gray;">No commission earned yet. Earn 10% for 5 paid referrals or 13% for 10.</p>`;
+      html += `<p style="color: gray;">No commission earned yet. Earn 9% for 5 paid referrals or 10% for 10.</p>`;
     }
 
     orderHistoryDetails.innerHTML = html;
@@ -647,12 +1048,48 @@ if (!adminOrdersSnapshot.empty) {
   });
 
   // Close modal if user clicks outside the modal content
-  window.onclick = function(event) {
+  window.onclick = function (event) {
     if (event.target === orderHistoryModal) {
       orderHistoryModal.style.display = "none";
     }
-  }
+  };
+
+
+
+// Highlight the "Account" link and toggle user info visibility
+document.addEventListener("DOMContentLoaded", () => {
+  const accountLink = document.querySelector('header nav a:nth-child(3)');
+  const userInfoDiv = document.getElementById("user-info");
+
+  // Hide user info by default
+  userInfoDiv.style.display = "none";
+
+  accountLink.addEventListener("click", (e) => {
+    e.preventDefault();
+    const isVisible = userInfoDiv.style.display === "block";
+    userInfoDiv.style.display = isVisible ? "none" : "block";
+  });
+});
+
+document.getElementById("home-link").addEventListener("click", (e) => {
+  e.preventDefault(); // prevent default anchor behavior
+  location.reload();  // refresh the page
+});
+
+
+  // *** LOGOUT BUTTON HANDLER ADDED HERE ***
+  document.getElementById('logout-btn').addEventListener('click', async () => {
+    if (confirm('Are you sure you want to logout?')) {
+      await firebase.auth().signOut();
+      window.location.href = 'index.html';
+    }
+  });
+
+
+
+
 </script>
+
 
 
 </body>
